@@ -50,8 +50,8 @@ pub async fn export_image(
 
     let path_buf = path.into_path().map_err(|e| e.to_string())?;
 
-    let guard = state.0.lock().map_err(|e| e.to_string())?;
-    let img = guard.as_ref().ok_or("No image loaded")?;
+    let history = state.0.lock().map_err(|e| e.to_string())?;
+    let img = history.current().ok_or("No image loaded")?;
 
     let file = std::fs::File::create(&path_buf).map_err(|e| e.to_string())?;
     let mut writer = BufWriter::new(file);

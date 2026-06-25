@@ -12,8 +12,8 @@ pub fn crop_image(
     width: u32,
     height: u32,
 ) -> Result<ImageMeta, String> {
-    let mut guard = state.0.lock().map_err(|e| e.to_string())?;
-    let img = guard.as_ref().ok_or("No image loaded")?;
+    let mut history = state.0.lock().map_err(|e| e.to_string())?;
+    let img = history.current().ok_or("No image loaded")?;
 
     if x + width > img.width() || y + height > img.height() {
         return Err(format!(
@@ -24,15 +24,16 @@ pub fn crop_image(
     }
 
     let cropped = img.crop_imm(x, y, width, height);
-    let meta = build_meta(&cropped, "png")?;
-    *guard = Some(cropped);
+    history.push(cropped);
+    let img = history.current().ok_or("State error after crop")?;
+    let meta = build_meta(img, "png", history.can_undo(), history.can_redo())?;
     Ok(meta)
 }
 
 #[tauri::command]
 pub fn rotate_image(state: State<'_, AppState>, degrees: f64) -> Result<ImageMeta, String> {
-    let mut guard = state.0.lock().map_err(|e| e.to_string())?;
-    let img = guard.as_ref().ok_or("No image loaded")?;
+    let mut history = state.0.lock().map_err(|e| e.to_string())?;
+    let img = history.current().ok_or("No image loaded")?;
 
     let rotated = match degrees {
         d if (d - 90.0).abs() < f64::EPSILON => {
@@ -58,8 +59,9 @@ pub fn rotate_image(state: State<'_, AppState>, degrees: f64) -> Result<ImageMet
         }
     };
 
-    let meta = build_meta(&rotated, "png")?;
-    *guard = Some(rotated);
+    history.push(rotated);
+    let img = history.current().ok_or("State error after rotate")?;
+    let meta = build_meta(img, "png", history.can_undo(), history.can_redo())?;
     Ok(meta)
 }
 
@@ -87,7 +89,6 @@ mod tests {
     #[test]
     fn crop_out_of_bounds_is_detected() {
         let img = solid_rgba(100, 100);
-        // Guard logic: x + width > img.width()
         assert!(10_u32 + 95 > img.width());
     }
 

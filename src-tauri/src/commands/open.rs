@@ -7,12 +7,14 @@ use tauri_plugin_dialog::DialogExt;
 
 use crate::AppState;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ImageMeta {
     pub width: u32,
     pub height: u32,
     pub format: String,
     pub preview: String,
+    pub can_undo: bool,
+    pub can_redo: bool,
 }
 
 pub fn encode_preview(img: &image::DynamicImage) -> Result<String, String> {
@@ -23,12 +25,19 @@ pub fn encode_preview(img: &image::DynamicImage) -> Result<String, String> {
     Ok(format!("data:image/png;base64,{b64}"))
 }
 
-pub fn build_meta(img: &image::DynamicImage, format: &str) -> Result<ImageMeta, String> {
+pub fn build_meta(
+    img: &image::DynamicImage,
+    format: &str,
+    can_undo: bool,
+    can_redo: bool,
+) -> Result<ImageMeta, String> {
     Ok(ImageMeta {
         width: img.width(),
         height: img.height(),
         format: format.to_string(),
         preview: encode_preview(img)?,
+        can_undo,
+        can_redo,
     })
 }
 
@@ -58,9 +67,10 @@ pub async fn open_image(
         .unwrap_or_else(|| "unknown".to_string());
 
     let img = image::open(&path_buf).map_err(|e| e.to_string())?;
-    let meta = build_meta(&img, &format)?;
 
-    *state.0.lock().map_err(|e| e.to_string())? = Some(img);
+    let mut history = state.0.lock().map_err(|e| e.to_string())?;
+    let meta = build_meta(&img, &format, false, false)?;
+    history.open(img);
 
     Ok(Some(meta))
 }
@@ -89,7 +99,7 @@ mod tests {
     #[test]
     fn build_meta_returns_correct_dimensions() {
         let img = solid_image(100, 80);
-        let meta = build_meta(&img, "png").unwrap();
+        let meta = build_meta(&img, "png", false, false).unwrap();
         assert_eq!(meta.width, 100);
         assert_eq!(meta.height, 80);
         assert_eq!(meta.format, "png");

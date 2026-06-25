@@ -3,6 +3,8 @@ export interface ImageMeta {
   height: number
   format: string
   preview: string
+  canUndo: boolean
+  canRedo: boolean
 }
 
 export interface CropRect {
@@ -15,3 +17,7 @@ export interface CropRect {
 export type EditorMode = 'idle' | 'cropping' | 'rotating'
 
 export type ExportFormat = 'png' | 'jpeg' | 'webp' | 'bmp' | 'tiff'
+
+export interface HistoryEntry {
+  label: string
+}

@@ -7,12 +7,16 @@ export const mockImageMeta: ImageMeta = {
   format: 'png',
   preview:
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  canUndo: false,
+  canRedo: false,
 }
 
 export const mockOpenImage = vi.fn().mockResolvedValue(mockImageMeta)
-export const mockCropImage = vi.fn().mockResolvedValue(mockImageMeta)
-export const mockRotateImage = vi.fn().mockResolvedValue(mockImageMeta)
+export const mockCropImage = vi.fn().mockResolvedValue({ ...mockImageMeta, canUndo: true })
+export const mockRotateImage = vi.fn().mockResolvedValue({ ...mockImageMeta, canUndo: true })
 export const mockExportImage = vi.fn().mockResolvedValue(undefined)
+export const mockUndoImage = vi.fn().mockResolvedValue(mockImageMeta)
+export const mockRedoImage = vi.fn().mockResolvedValue(mockImageMeta)
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn((command: string) => {
@@ -25,6 +29,10 @@ vi.mock('@tauri-apps/api/core', () => ({
         return mockRotateImage()
       case 'export_image':
         return mockExportImage()
+      case 'undo_image':
+        return mockUndoImage()
+      case 'redo_image':
+        return mockRedoImage()
       default:
         return Promise.reject(new Error(`Unknown command: ${command}`))
     }

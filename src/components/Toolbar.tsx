@@ -4,28 +4,36 @@ interface ToolbarProps {
   hasImage: boolean
   mode: EditorMode
   isLoading: boolean
+  canUndo: boolean
+  canRedo: boolean
   onOpen: () => void
   onCropMode: () => void
   onRotateMode: () => void
   onExportOpen: () => void
+  onUndo: () => void
+  onRedo: () => void
 }
 
 export function Toolbar({
   hasImage,
   mode,
   isLoading,
+  canUndo,
+  canRedo,
   onOpen,
   onCropMode,
   onRotateMode,
   onExportOpen,
+  onUndo,
+  onRedo,
 }: ToolbarProps) {
   const disabled = !hasImage || isLoading
   const cropActive = mode === 'cropping'
   const rotateActive = mode === 'rotating'
 
   return (
-    <header className="flex items-center gap-3 px-4 py-2 bg-slate-900 border-b border-slate-700 select-none">
-      <span className="text-lg font-bold tracking-tight text-white mr-4">
+    <header className="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-slate-700 select-none">
+      <span className="text-lg font-bold tracking-tight text-white mr-3">
         light-cut-img<span className="text-indigo-400">Z</span>
       </span>
 
@@ -64,6 +72,28 @@ export function Toolbar({
       >
         <RotateIcon />
         Rotate
+      </button>
+
+      <div className="w-px h-5 bg-slate-600" />
+
+      <button
+        onClick={onUndo}
+        disabled={!canUndo || isLoading}
+        className="toolbar-btn"
+        title="Undo (Ctrl+Z)"
+        aria-label="Undo"
+      >
+        <UndoIcon />
+      </button>
+
+      <button
+        onClick={onRedo}
+        disabled={!canRedo || isLoading}
+        className="toolbar-btn"
+        title="Redo (Ctrl+Y)"
+        aria-label="Redo"
+      >
+        <RedoIcon />
       </button>
 
       <div className="flex-1" />
@@ -144,6 +174,38 @@ function ExportIcon() {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
+function UndoIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polyline points="1 4 1 10 7 10" />
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+    </svg>
+  )
+}
+
+function RedoIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polyline points="23 4 23 10 17 10" />
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
     </svg>
   )
 }
