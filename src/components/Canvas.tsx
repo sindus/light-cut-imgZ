@@ -24,7 +24,7 @@ interface CanvasProps {
   onOpenByPaths?: (paths: string[]) => void
   onColorPick?: (color: PickedColor | null) => void
   onColorPickConfirm?: (color: PickedColor) => void
-  previewFilter?: string | null
+  onImageRef?: (el: HTMLImageElement | null) => void
 }
 
 const ZOOM_STEP = 1.15
@@ -49,11 +49,16 @@ export function Canvas({
   onOpenByPaths,
   onColorPick,
   onColorPickConfirm,
-  previewFilter,
+  onImageRef,
 }: CanvasProps) {
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const magnifierRef = useRef<HTMLCanvasElement | null>(null)
   const lastPickedRef = useRef<PickedColor | null>(null)
+  const onImageRefStable = useRef(onImageRef)
+  onImageRefStable.current = onImageRef
+  const imgCallbackRef = useCallback((el: HTMLImageElement | null) => {
+    onImageRefStable.current?.(el)
+  }, [])
 
   // Build offscreen canvas from preview data URL for pixel reading
   useEffect(() => {
@@ -280,7 +285,8 @@ export function Canvas({
           className="block"
           draggable={false}
           data-testid="canvas-image"
-          style={{ imageRendering: zoom >= 3 ? 'pixelated' : 'auto', filter: previewFilter ?? undefined }}
+          ref={imgCallbackRef}
+          style={{ imageRendering: zoom >= 3 ? 'pixelated' : 'auto' }}
         />
 
         {showGrid && (

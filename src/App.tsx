@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AboutDialog } from './components/AboutDialog'
 import { AdjustmentsPanel } from './components/AdjustmentsPanel'
 import type { AdjustmentCommand } from './components/AdjustmentsPanel'
@@ -93,7 +93,10 @@ export default function App() {
   const [pickedColor, setPickedColor] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
   const [pickedColorResult, setPickedColorResult] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
   const [showAdjustments, setShowAdjustments] = useState(false)
-  const [previewFilter, setPreviewFilter] = useState<string | null>(null)
+  const previewImgRef = useRef<HTMLImageElement | null>(null)
+  const handlePreviewFilterChange = useCallback((filter: string | null) => {
+    if (previewImgRef.current) previewImgRef.current.style.filter = filter ?? ''
+  }, [])
 
   const activeTabIdRef = useRef(activeTabId)
   useEffect(() => {
@@ -322,7 +325,7 @@ export default function App() {
             onOpenByPaths={handleOpenByPaths}
             onColorPick={setPickedColor}
             onColorPickConfirm={handleColorPickConfirm}
-            previewFilter={previewFilter}
+            onImageRef={(el) => { previewImgRef.current = el }}
           />
 
           {showAdjustments && (
@@ -330,7 +333,7 @@ export default function App() {
               tabId={activeTabId}
               isLoading={isLoading}
               onApply={handleAdjustmentCommand}
-              onPreviewFilterChange={setPreviewFilter}
+              onPreviewFilterChange={handlePreviewFilterChange}
             />
           )}
 
