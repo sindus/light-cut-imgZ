@@ -1,11 +1,19 @@
 use image::DynamicImage;
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Mutex;
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
+    Emitter,
+};
+use tauri_plugin_opener::OpenerExt;
 
 pub mod commands;
 
 pub struct AppHistory {
     pub entries: Vec<DynamicImage>,
     pub index: Option<usize>,
+    pub source_path: Option<PathBuf>,
 }
 
 impl Default for AppHistory {
@@ -19,6 +27,7 @@ impl AppHistory {
         AppHistory {
             entries: Vec::new(),
             index: None,
+            source_path: None,
         }
     }
 
@@ -69,20 +78,102 @@ impl AppHistory {
     }
 }
 
-pub struct AppState(pub Mutex<AppHistory>);
+pub struct AppState(pub Mutex<HashMap<String, AppHistory>>);
+
+const RELEASES_URL: &str = "https://github.com/sindus/light-cut-imgZ/releases";
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(AppState(Mutex::new(AppHistory::new())))
+        .plugin(tauri_plugin_opener::init())
+        .manage(AppState(Mutex::new(HashMap::new())))
+        .setup(|app| {
+            let open_item = MenuItemBuilder::with_id("file-open", "Open…").build(app)?;
+            let close_tab_item =
+                MenuItemBuilder::with_id("file-close-tab", "Close Tab").build(app)?;
+            let close_others_item =
+                MenuItemBuilder::with_id("file-close-others", "Close Other Tabs").build(app)?;
+            let close_all_item =
+                MenuItemBuilder::with_id("file-close-all", "Close All").build(app)?;
+            let check_updates_item =
+                MenuItemBuilder::with_id("check-updates", "Check for Updates…").build(app)?;
+            let about_item =
+                MenuItemBuilder::with_id("about", "About light-cut-imgZ").build(app)?;
+            let file_submenu = SubmenuBuilder::new(app, "File")
+                .item(&open_item)
+                .separator()
+                .item(&close_tab_item)
+                .item(&close_others_item)
+                .item(&close_all_item)
+                .separator()
+                .item(&check_updates_item)
+                .item(&about_item)
+                .build()?;
+
+            let undo_item = MenuItemBuilder::with_id("edit-undo", "Undo").build(app)?;
+            let redo_item = MenuItemBuilder::with_id("edit-redo", "Redo").build(app)?;
+            let toggle_history_item =
+                MenuItemBuilder::with_id("edit-toggle-history", "Show/Hide History").build(app)?;
+            let edit_submenu = SubmenuBuilder::new(app, "Edit")
+                .item(&undo_item)
+                .item(&redo_item)
+                .separator()
+                .item(&toggle_history_item)
+                .build()?;
+
+            let menu = MenuBuilder::new(app).item(&file_submenu).item(&edit_submenu).build()?;
+            app.set_menu(menu)?;
+            Ok(())
+        })
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            "file-open" => {
+                app.emit("menu-open", ()).ok();
+            }
+            "file-close-tab" => {
+                app.emit("menu-close-tab", ()).ok();
+            }
+            "file-close-others" => {
+                app.emit("menu-close-others", ()).ok();
+            }
+            "file-close-all" => {
+                app.emit("menu-close-all", ()).ok();
+            }
+            "edit-undo" => {
+                app.emit("menu-undo", ()).ok();
+            }
+            "edit-redo" => {
+                app.emit("menu-redo", ()).ok();
+            }
+            "edit-toggle-history" => {
+                app.emit("menu-toggle-history", ()).ok();
+            }
+            "about" => {
+                app.emit("show-about", env!("CARGO_PKG_VERSION")).ok();
+            }
+            "check-updates" => {
+                app.opener()
+                    .open_url(RELEASES_URL, None::<&str>)
+                    .ok();
+            }
+            _ => {}
+        })
         .invoke_handler(tauri::generate_handler![
-            commands::open::open_image,
+            commands::open::open_images,
+            commands::open::open_images_by_paths,
+            commands::exif::get_exif,
+            commands::exif::strip_exif,
+            commands::transform::canvas_resize_image,
             commands::transform::crop_image,
+            commands::transform::flip_image,
+            commands::transform::resize_image,
             commands::transform::rotate_image,
             commands::export::export_image,
             commands::history::undo_image,
             commands::history::redo_image,
+            commands::tabs::close_tab,
+            commands::tabs::close_all_tabs,
+            commands::tabs::close_other_tabs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -149,7 +240,7 @@ mod tests {
         h.push(img(10, 10));
         h.push(img(20, 20));
         h.undo();
-        h.push(img(50, 50)); // should discard img(20,20)
+        h.push(img(50, 50));
         assert!(!h.can_redo());
         assert_eq!(h.current().unwrap().width(), 50);
     }

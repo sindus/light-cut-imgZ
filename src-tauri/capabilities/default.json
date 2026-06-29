@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Default capabilities for light-cut-imgZ",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:allow-open", "dialog:allow-save"]
+  "permissions": ["core:default", "dialog:allow-open", "dialog:allow-save", "opener:allow-open-url"]
 }

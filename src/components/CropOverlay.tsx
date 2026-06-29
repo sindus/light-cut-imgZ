@@ -7,13 +7,36 @@ interface CropOverlayProps {
   imageHeight: number
   onApply: (rect: CropRect) => void
   onCancel: () => void
+  onCropRectChange?: (rect: CropRect) => void
 }
 
 const HANDLE_SIZE = 8
 
-export function CropOverlay({ imageWidth, imageHeight, onApply, onCancel }: CropOverlayProps) {
+export function CropOverlay({ imageWidth, imageHeight, onApply, onCancel, onCropRectChange }: CropOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { cropRect, onPointerDown, onPointerMove, onPointerUp } = useCrop(imageWidth, imageHeight)
+
+  // Keep a ref so the keyboard handler always reads the latest cropRect
+  const cropRectRef = useRef(cropRect)
+  useEffect(() => {
+    cropRectRef.current = cropRect
+    onCropRectChange?.(cropRect)
+  }, [cropRect, onCropRectChange])
+
+  // Enter = apply, Escape = cancel
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        onApply(cropRectRef.current)
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        onCancel()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onApply, onCancel])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -79,7 +102,7 @@ export function CropOverlay({ imageWidth, imageHeight, onApply, onCancel }: Crop
   }, [cropRect, imageWidth, imageHeight])
 
   return (
-    <div className="absolute inset-0 flex flex-col">
+    <div className="absolute inset-0">
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full cursor-crosshair"
@@ -88,23 +111,6 @@ export function CropOverlay({ imageWidth, imageHeight, onApply, onCancel }: Crop
         onPointerUp={onPointerUp}
         aria-label="Crop selection"
       />
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        <span className="text-xs text-white/70 bg-black/50 px-2 py-1 rounded self-center">
-          {cropRect.width} × {cropRect.height}
-        </span>
-        <button
-          onClick={onCancel}
-          className="px-4 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => onApply(cropRect)}
-          className="px-4 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors"
-        >
-          Apply
-        </button>
-      </div>
     </div>
   )
 }

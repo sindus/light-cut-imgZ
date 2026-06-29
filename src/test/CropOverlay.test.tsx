@@ -26,16 +26,26 @@ describe('CropOverlay', () => {
     expect(screen.getByLabelText(/crop selection/i)).toBeInTheDocument()
   })
 
-  it('shows Apply and Cancel buttons', () => {
-    render(<CropOverlay imageWidth={800} imageHeight={600} onApply={vi.fn()} onCancel={vi.fn()} />)
-    expect(screen.getByRole('button', { name: /apply/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
+  it('notifies parent of initial crop rect via onCropRectChange', () => {
+    const onCropRectChange = vi.fn()
+    render(
+      <CropOverlay
+        imageWidth={800}
+        imageHeight={600}
+        onApply={vi.fn()}
+        onCancel={vi.fn()}
+        onCropRectChange={onCropRectChange}
+      />
+    )
+    expect(onCropRectChange).toHaveBeenCalledWith(
+      expect.objectContaining({ x: expect.any(Number), y: expect.any(Number), width: expect.any(Number), height: expect.any(Number) })
+    )
   })
 
-  it('Apply button calls onApply with the current crop rect', async () => {
+  it('Enter key calls onApply with the current crop rect', async () => {
     const onApply = vi.fn()
     render(<CropOverlay imageWidth={800} imageHeight={600} onApply={onApply} onCancel={vi.fn()} />)
-    await userEvent.click(screen.getByRole('button', { name: /apply/i }))
+    await userEvent.keyboard('{Enter}')
     expect(onApply).toHaveBeenCalledOnce()
     const rect = onApply.mock.calls[0][0]
     expect(rect).toHaveProperty('x')
@@ -44,10 +54,10 @@ describe('CropOverlay', () => {
     expect(rect).toHaveProperty('height')
   })
 
-  it('Cancel button calls onCancel', async () => {
+  it('Escape key calls onCancel', async () => {
     const onCancel = vi.fn()
     render(<CropOverlay imageWidth={800} imageHeight={600} onApply={vi.fn()} onCancel={onCancel} />)
-    await userEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    await userEvent.keyboard('{Escape}')
     expect(onCancel).toHaveBeenCalledOnce()
   })
 })

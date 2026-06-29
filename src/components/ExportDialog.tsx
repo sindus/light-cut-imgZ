@@ -4,6 +4,8 @@ import type { ExportFormat } from '../types'
 interface ExportDialogProps {
   open: boolean
   isLoading: boolean
+  defaultFormat?: ExportFormat
+  defaultQuality?: number
   onExport: (format: ExportFormat, quality?: number) => void
   onClose: () => void
 }
@@ -16,10 +18,10 @@ const FORMATS: Array<{ value: ExportFormat; label: string; supportsQuality: bool
   { value: 'tiff', label: 'TIFF', supportsQuality: false },
 ]
 
-export function ExportDialog({ open, isLoading, onExport, onClose }: ExportDialogProps) {
+export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, onExport, onClose }: ExportDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [format, setFormat] = useState<ExportFormat>('png')
-  const [quality, setQuality] = useState(90)
+  const [format, setFormat] = useState<ExportFormat>(defaultFormat ?? 'png')
+  const [quality, setQuality] = useState(defaultQuality ?? 90)
 
   useEffect(() => {
     const dialog = dialogRef.current

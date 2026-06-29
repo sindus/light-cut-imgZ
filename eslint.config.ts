@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import prettierConfig from 'eslint-config-prettier'
 
 export default tseslint.config(
-  { ignores: ['dist', 'src-tauri/target', 'e2e/playwright-report', 'e2e/test-results'] },
+  { ignores: ['dist', 'src-tauri/target', 'e2e/playwright-report', 'e2e/test-results', '.claude'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

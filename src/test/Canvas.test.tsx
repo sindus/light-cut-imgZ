@@ -20,6 +20,7 @@ function renderCanvas(props: Partial<Parameters<typeof Canvas>[0]> = {}) {
     onCropApply: vi.fn(),
     onCropCancel: vi.fn(),
     onZoomChange: vi.fn(),
+    onOpen: vi.fn(),
   }
   return render(<Canvas {...defaults} {...props} />)
 }

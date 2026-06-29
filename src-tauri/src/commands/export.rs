@@ -31,6 +31,7 @@ fn extension_for(fmt: ImageFormat) -> &'static str {
 pub async fn export_image(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
+    tab_id: String,
     format: String,
     quality: Option<u8>,
 ) -> Result<(), String> {
@@ -50,7 +51,8 @@ pub async fn export_image(
 
     let path_buf = path.into_path().map_err(|e| e.to_string())?;
 
-    let history = state.0.lock().map_err(|e| e.to_string())?;
+    let map = state.0.lock().map_err(|e| e.to_string())?;
+    let history = map.get(&tab_id).ok_or("Tab not found")?;
     let img = history.current().ok_or("No image loaded")?;
 
     let file = std::fs::File::create(&path_buf).map_err(|e| e.to_string())?;

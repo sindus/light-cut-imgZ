@@ -8,24 +8,19 @@ function renderToolbar(props: Partial<Parameters<typeof Toolbar>[0]> = {}) {
     hasImage: false,
     mode: 'idle' as const,
     isLoading: false,
-    canUndo: false,
-    canRedo: false,
-    onOpen: vi.fn(),
     onCropMode: vi.fn(),
     onRotateMode: vi.fn(),
+    onFlipOpen: vi.fn(),
+    onResizeOpen: vi.fn(),
+    onCanvasResizeOpen: vi.fn(),
     onExportOpen: vi.fn(),
-    onUndo: vi.fn(),
-    onRedo: vi.fn(),
+    showExif: false,
+    onToggleExif: vi.fn(),
   }
   return render(<Toolbar {...defaults} {...props} />)
 }
 
 describe('Toolbar', () => {
-  it('Open button is always enabled', () => {
-    renderToolbar({ hasImage: false })
-    expect(screen.getByRole('button', { name: /open image/i })).not.toBeDisabled()
-  })
-
   it('Crop, Rotate, Export are disabled when no image is loaded', () => {
     renderToolbar({ hasImage: false })
     expect(screen.getByRole('button', { name: /^crop$/i })).toBeDisabled()
@@ -42,17 +37,9 @@ describe('Toolbar', () => {
 
   it('All action buttons are disabled while loading', () => {
     renderToolbar({ hasImage: true, isLoading: true })
-    expect(screen.getByRole('button', { name: /open image/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /^crop$/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /^rotate$/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /export/i })).toBeDisabled()
-  })
-
-  it('Clicking Open fires onOpen', async () => {
-    const onOpen = vi.fn()
-    renderToolbar({ onOpen })
-    await userEvent.click(screen.getByRole('button', { name: /open image/i }))
-    expect(onOpen).toHaveBeenCalledOnce()
   })
 
   it('Clicking Crop fires onCropMode when image is loaded', async () => {
@@ -74,32 +61,22 @@ describe('Toolbar', () => {
     expect(btn).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('Undo button is disabled when canUndo is false', () => {
-    renderToolbar({ hasImage: true, canUndo: false })
-    expect(screen.getByRole('button', { name: /^undo$/i })).toBeDisabled()
+  it('EXIF toggle button shows active state when showExif is true', () => {
+    renderToolbar({ hasImage: true, showExif: true })
+    const btn = screen.getByRole('button', { name: /exif metadata/i })
+    expect(btn).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('Undo button is enabled when canUndo is true', () => {
-    renderToolbar({ hasImage: true, canUndo: true })
-    expect(screen.getByRole('button', { name: /^undo$/i })).not.toBeDisabled()
+  it('Clicking EXIF toggle fires onToggleExif', async () => {
+    const onToggleExif = vi.fn()
+    renderToolbar({ hasImage: true, onToggleExif })
+    await userEvent.click(screen.getByRole('button', { name: /exif metadata/i }))
+    expect(onToggleExif).toHaveBeenCalledOnce()
   })
 
-  it('Redo button is enabled when canRedo is true', () => {
-    renderToolbar({ hasImage: true, canRedo: true })
-    expect(screen.getByRole('button', { name: /^redo$/i })).not.toBeDisabled()
-  })
-
-  it('Clicking Undo fires onUndo', async () => {
-    const onUndo = vi.fn()
-    renderToolbar({ hasImage: true, canUndo: true, onUndo })
-    await userEvent.click(screen.getByRole('button', { name: /^undo$/i }))
-    expect(onUndo).toHaveBeenCalledOnce()
-  })
-
-  it('Clicking Redo fires onRedo', async () => {
-    const onRedo = vi.fn()
-    renderToolbar({ hasImage: true, canRedo: true, onRedo })
-    await userEvent.click(screen.getByRole('button', { name: /^redo$/i }))
-    expect(onRedo).toHaveBeenCalledOnce()
+  it('Grid toggle button shows active state when showGrid is true', () => {
+    renderToolbar({ hasImage: true, showGrid: true })
+    const btn = screen.getByRole('button', { name: /toggle grid/i })
+    expect(btn).toHaveAttribute('aria-pressed', 'true')
   })
 })

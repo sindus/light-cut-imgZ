@@ -5,6 +5,8 @@ export interface ImageMeta {
   preview: string
   canUndo: boolean
   canRedo: boolean
+  filename?: string
+  path?: string
 }
 
 export interface CropRect {
@@ -14,10 +16,19 @@ export interface CropRect {
   height: number
 }
 
-export type EditorMode = 'idle' | 'cropping' | 'rotating'
+export type EditorMode = 'idle' | 'cropping' | 'rotating' | 'eyedropper'
 
 export type ExportFormat = 'png' | 'jpeg' | 'webp' | 'bmp' | 'tiff'
 
 export interface HistoryEntry {
   label: string
+}
+
+export interface Tab {
+  id: string
+  label: string
+  image: ImageMeta
+  history: HistoryEntry[]
+  historyIndex: number
+  zoom: number
 }
