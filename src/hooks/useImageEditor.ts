@@ -9,6 +9,22 @@ import {
   adjustSharpen,
   adjustVibrance,
   adjustWhiteBalance,
+  filterGrayscale,
+  filterSepia,
+  filterInvert,
+  filterVignette,
+  filterGrain,
+  filterPixelate,
+  filterPosterize,
+  filterDuotone,
+  filterSketch,
+  filterLomo,
+  filterVintage,
+  filterCool,
+  filterWarm,
+  filterFade,
+  filterDrama,
+  filterCrossProcess,
   canvasResizeImage,
   closeAllTabs,
   closeOtherTabs,
@@ -93,6 +109,22 @@ interface ImageEditorActions {
   handleAdjustWhiteBalance: (temperature: number, tint: number) => Promise<void>
   handleAdjustSharpen: (amount: number, radius: number, threshold: number) => Promise<void>
   handleAdjustDenoise: (strength: number) => Promise<void>
+  handleFilterGrayscale: (rWeight: number, gWeight: number, bWeight: number) => Promise<void>
+  handleFilterSepia: (intensity: number) => Promise<void>
+  handleFilterInvert: () => Promise<void>
+  handleFilterVignette: (strength: number, feather: number) => Promise<void>
+  handleFilterGrain: (amount: number, monochrome: boolean) => Promise<void>
+  handleFilterPixelate: (size: number) => Promise<void>
+  handleFilterPosterize: (levels: number) => Promise<void>
+  handleFilterDuotone: (shadowR: number, shadowG: number, shadowB: number, highlightR: number, highlightG: number, highlightB: number) => Promise<void>
+  handleFilterSketch: () => Promise<void>
+  handleFilterLomo: (intensity: number) => Promise<void>
+  handleFilterVintage: (intensity: number) => Promise<void>
+  handleFilterCool: (intensity: number) => Promise<void>
+  handleFilterWarm: (intensity: number) => Promise<void>
+  handleFilterFade: (intensity: number) => Promise<void>
+  handleFilterDrama: (intensity: number) => Promise<void>
+  handleFilterCrossProcess: (intensity: number) => Promise<void>
 }
 
 export function useImageEditor(): ImageEditorState & ImageEditorActions {
@@ -409,6 +441,75 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     [applyAdjustment],
   )
 
+  const handleFilterGrayscale = useCallback(
+    (rWeight: number, gWeight: number, bWeight: number) =>
+      applyAdjustment('Grayscale', (id) => filterGrayscale(id, rWeight, gWeight, bWeight)),
+    [applyAdjustment],
+  )
+  const handleFilterSepia = useCallback(
+    (intensity: number) => applyAdjustment('Sépia', (id) => filterSepia(id, intensity)),
+    [applyAdjustment],
+  )
+  const handleFilterInvert = useCallback(
+    () => applyAdjustment('Négatif', (id) => filterInvert(id)),
+    [applyAdjustment],
+  )
+  const handleFilterVignette = useCallback(
+    (strength: number, feather: number) =>
+      applyAdjustment('Vignette', (id) => filterVignette(id, strength, feather)),
+    [applyAdjustment],
+  )
+  const handleFilterGrain = useCallback(
+    (amount: number, monochrome: boolean) =>
+      applyAdjustment('Grain', (id) => filterGrain(id, amount, monochrome)),
+    [applyAdjustment],
+  )
+  const handleFilterPixelate = useCallback(
+    (size: number) => applyAdjustment('Pixelise', (id) => filterPixelate(id, size)),
+    [applyAdjustment],
+  )
+  const handleFilterPosterize = useCallback(
+    (levels: number) => applyAdjustment('Postérisé', (id) => filterPosterize(id, levels)),
+    [applyAdjustment],
+  )
+  const handleFilterDuotone = useCallback(
+    (shadowR: number, shadowG: number, shadowB: number, highlightR: number, highlightG: number, highlightB: number) =>
+      applyAdjustment('Duotone', (id) => filterDuotone(id, shadowR, shadowG, shadowB, highlightR, highlightG, highlightB)),
+    [applyAdjustment],
+  )
+  const handleFilterSketch = useCallback(
+    () => applyAdjustment('Sketch', (id) => filterSketch(id)),
+    [applyAdjustment],
+  )
+  const handleFilterLomo = useCallback(
+    (intensity: number) => applyAdjustment('Lomo', (id) => filterLomo(id, intensity)),
+    [applyAdjustment],
+  )
+  const handleFilterVintage = useCallback(
+    (intensity: number) => applyAdjustment('Vintage', (id) => filterVintage(id, intensity)),
+    [applyAdjustment],
+  )
+  const handleFilterCool = useCallback(
+    (intensity: number) => applyAdjustment('Cool', (id) => filterCool(id, intensity)),
+    [applyAdjustment],
+  )
+  const handleFilterWarm = useCallback(
+    (intensity: number) => applyAdjustment('Warm', (id) => filterWarm(id, intensity)),
+    [applyAdjustment],
+  )
+  const handleFilterFade = useCallback(
+    (intensity: number) => applyAdjustment('Fade', (id) => filterFade(id, intensity)),
+    [applyAdjustment],
+  )
+  const handleFilterDrama = useCallback(
+    (intensity: number) => applyAdjustment('Drama', (id) => filterDrama(id, intensity)),
+    [applyAdjustment],
+  )
+  const handleFilterCrossProcess = useCallback(
+    (intensity: number) => applyAdjustment('Cross-process', (id) => filterCrossProcess(id, intensity)),
+    [applyAdjustment],
+  )
+
   const enterCropMode = useCallback(() => setMode('cropping'), [])
   const exitCropMode = useCallback(() => setMode('idle'), [])
   const enterRotateMode = useCallback(() => setMode('rotating'), [])
@@ -463,5 +564,21 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     handleAdjustWhiteBalance,
     handleAdjustSharpen,
     handleAdjustDenoise,
+    handleFilterGrayscale,
+    handleFilterSepia,
+    handleFilterInvert,
+    handleFilterVignette,
+    handleFilterGrain,
+    handleFilterPixelate,
+    handleFilterPosterize,
+    handleFilterDuotone,
+    handleFilterSketch,
+    handleFilterLomo,
+    handleFilterVintage,
+    handleFilterCool,
+    handleFilterWarm,
+    handleFilterFade,
+    handleFilterDrama,
+    handleFilterCrossProcess,
   }
 }

@@ -1,5 +1,7 @@
+pub mod adjustments;
 pub mod exif;
 pub mod export;
+pub mod filters;
 pub mod history;
 pub mod open;
 pub mod tabs;

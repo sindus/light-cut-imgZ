@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AboutDialog } from './components/AboutDialog'
 import { AdjustmentsPanel } from './components/AdjustmentsPanel'
 import type { AdjustmentCommand } from './components/AdjustmentsPanel'
+import { FiltersPanel } from './components/FiltersPanel'
+import type { FilterCommand } from './components/FiltersPanel'
 import { Canvas } from './components/Canvas'
 import { CanvasResizeDialog } from './components/CanvasResizeDialog'
 import { CropControls } from './components/CropControls'
@@ -73,6 +75,22 @@ export default function App() {
     handleAdjustWhiteBalance,
     handleAdjustSharpen,
     handleAdjustDenoise,
+    handleFilterGrayscale,
+    handleFilterSepia,
+    handleFilterInvert,
+    handleFilterVignette,
+    handleFilterGrain,
+    handleFilterPixelate,
+    handleFilterPosterize,
+    handleFilterDuotone,
+    handleFilterSketch,
+    handleFilterLomo,
+    handleFilterVintage,
+    handleFilterCool,
+    handleFilterWarm,
+    handleFilterFade,
+    handleFilterDrama,
+    handleFilterCrossProcess,
   } = useImageEditor()
 
   const [exportOpen, setExportOpen] = useState(false)
@@ -93,6 +111,7 @@ export default function App() {
   const [pickedColor, setPickedColor] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
   const [pickedColorResult, setPickedColorResult] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
   const [showAdjustments, setShowAdjustments] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const previewImgRef = useRef<HTMLImageElement | null>(null)
   const handlePreviewFilterChange = useCallback((filter: string | null) => {
     if (previewImgRef.current) previewImgRef.current.style.filter = filter ?? ''
@@ -211,6 +230,27 @@ export default function App() {
       enterEyedropperMode()
     }
   }
+  const handleFilterCommand = async (cmd: FilterCommand) => {
+    switch (cmd.type) {
+      case 'grayscale': await handleFilterGrayscale(cmd.rWeight, cmd.gWeight, cmd.bWeight); break
+      case 'sepia': await handleFilterSepia(cmd.intensity); break
+      case 'invert': await handleFilterInvert(); break
+      case 'vignette': await handleFilterVignette(cmd.strength, cmd.feather); break
+      case 'grain': await handleFilterGrain(cmd.amount, cmd.monochrome); break
+      case 'pixelate': await handleFilterPixelate(cmd.size); break
+      case 'posterize': await handleFilterPosterize(cmd.levels); break
+      case 'duotone': await handleFilterDuotone(cmd.shadowR, cmd.shadowG, cmd.shadowB, cmd.highlightR, cmd.highlightG, cmd.highlightB); break
+      case 'sketch': await handleFilterSketch(); break
+      case 'lomo': await handleFilterLomo(cmd.intensity); break
+      case 'vintage': await handleFilterVintage(cmd.intensity); break
+      case 'cool': await handleFilterCool(cmd.intensity); break
+      case 'warm': await handleFilterWarm(cmd.intensity); break
+      case 'fade': await handleFilterFade(cmd.intensity); break
+      case 'drama': await handleFilterDrama(cmd.intensity); break
+      case 'cross-process': await handleFilterCrossProcess(cmd.intensity); break
+    }
+  }
+
   const handleAdjustmentCommand = async (cmd: AdjustmentCommand) => {
     switch (cmd.type) {
       case 'brightness-contrast': await handleAdjustBrightnessContrast(cmd.brightness, cmd.contrast); break
@@ -255,7 +295,9 @@ export default function App() {
         showGrid={showGrid}
         onToggleGrid={() => setShowGrid((g) => !g)}
         showAdjustments={showAdjustments}
-        onAdjustmentsOpen={() => setShowAdjustments((p) => !p)}
+        onAdjustmentsOpen={() => { setShowAdjustments((p) => !p); setShowFilters(false) }}
+        showFilters={showFilters}
+        onFiltersOpen={() => { setShowFilters((p) => !p); setShowAdjustments(false) }}
         onCopy={handleCopyToClipboard}
         onEyedropperMode={onEyedropperMode}
         onPrefsOpen={() => setPrefsOpen(true)}
@@ -333,6 +375,16 @@ export default function App() {
               tabId={activeTabId}
               isLoading={isLoading}
               onApply={handleAdjustmentCommand}
+              onPreviewFilterChange={handlePreviewFilterChange}
+            />
+          )}
+
+          {showFilters && (
+            <FiltersPanel
+              tabId={activeTabId}
+              image={image}
+              isLoading={isLoading}
+              onApply={handleFilterCommand}
               onPreviewFilterChange={handlePreviewFilterChange}
             />
           )}

@@ -157,3 +157,67 @@ export async function adjustSharpen(tabId: string, amount: number, radius: numbe
 export async function adjustDenoise(tabId: string, strength: number): Promise<ImageMeta> {
   return mapMeta(await invoke<Record<string, unknown>>('adjust_denoise', { tabId, strength }))
 }
+
+export async function filterGrayscale(tabId: string, rWeight: number, gWeight: number, bWeight: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_grayscale', { tabId, rWeight, gWeight, bWeight }))
+}
+
+export async function filterSepia(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_sepia', { tabId, intensity }))
+}
+
+export async function filterInvert(tabId: string): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_invert', { tabId }))
+}
+
+export async function filterVignette(tabId: string, strength: number, feather: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_vignette', { tabId, strength, feather }))
+}
+
+export async function filterGrain(tabId: string, amount: number, monochrome: boolean): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_grain', { tabId, amount, monochrome }))
+}
+
+export async function filterPixelate(tabId: string, size: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_pixelate', { tabId, size }))
+}
+
+export async function filterPosterize(tabId: string, levels: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_posterize', { tabId, levels }))
+}
+
+export async function filterDuotone(tabId: string, shadowR: number, shadowG: number, shadowB: number, highlightR: number, highlightG: number, highlightB: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_duotone', { tabId, shadowR, shadowG, shadowB, highlightR, highlightG, highlightB }))
+}
+
+export async function filterSketch(tabId: string): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_sketch', { tabId }))
+}
+
+export async function filterLomo(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_lomo', { tabId, intensity }))
+}
+
+export async function filterVintage(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_vintage', { tabId, intensity }))
+}
+
+export async function filterCool(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_cool', { tabId, intensity }))
+}
+
+export async function filterWarm(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_warm', { tabId, intensity }))
+}
+
+export async function filterFade(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_fade', { tabId, intensity }))
+}
+
+export async function filterDrama(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_drama', { tabId, intensity }))
+}
+
+export async function filterCrossProcess(tabId: string, intensity: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_cross_process', { tabId, intensity }))
+}

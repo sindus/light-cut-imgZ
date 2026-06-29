@@ -1,0 +1,350 @@
+import { useCallback, useRef, useState } from 'react'
+import type { ImageMeta } from '../types'
+
+export type FilterCommand =
+  | { type: 'grayscale'; rWeight: number; gWeight: number; bWeight: number }
+  | { type: 'sepia'; intensity: number }
+  | { type: 'invert' }
+  | { type: 'vignette'; strength: number; feather: number }
+  | { type: 'grain'; amount: number; monochrome: boolean }
+  | { type: 'pixelate'; size: number }
+  | { type: 'posterize'; levels: number }
+  | { type: 'duotone'; shadowR: number; shadowG: number; shadowB: number; highlightR: number; highlightG: number; highlightB: number }
+  | { type: 'sketch' }
+  | { type: 'lomo'; intensity: number }
+  | { type: 'vintage'; intensity: number }
+  | { type: 'cool'; intensity: number }
+  | { type: 'warm'; intensity: number }
+  | { type: 'fade'; intensity: number }
+  | { type: 'drama'; intensity: number }
+  | { type: 'cross-process'; intensity: number }
+
+interface FiltersPanelProps {
+  tabId: string | null
+  image: ImageMeta | null
+  isLoading: boolean
+  onApply: (cmd: FilterCommand) => Promise<void>
+  onPreviewFilterChange: (filter: string | null) => void
+}
+
+// ── Preset definitions ────────────────────────────────────────────────────────
+
+interface Preset {
+  id: string
+  name: string
+  css: string
+  cmd: FilterCommand
+}
+
+const PRESETS: Preset[] = [
+  { id: 'grayscale', name: 'N&B',     css: 'grayscale(1)',                                           cmd: { type: 'grayscale', rWeight: 0.299, gWeight: 0.587, bWeight: 0.114 } },
+  { id: 'sepia',     name: 'Sépia',   css: 'sepia(1)',                                               cmd: { type: 'sepia', intensity: 1.0 } },
+  { id: 'invert',    name: 'Négatif', css: 'invert(1)',                                              cmd: { type: 'invert' } },
+  { id: 'lomo',      name: 'Lomo',    css: 'saturate(1.6) contrast(1.2) brightness(0.88)',           cmd: { type: 'lomo', intensity: 1.0 } },
+  { id: 'vintage',   name: 'Vintage', css: 'sepia(0.4) contrast(0.9) brightness(1.05) saturate(0.85)', cmd: { type: 'vintage', intensity: 1.0 } },
+  { id: 'cool',      name: 'Cool',    css: 'hue-rotate(20deg) saturate(1.15) brightness(1.05)',      cmd: { type: 'cool', intensity: 1.0 } },
+  { id: 'warm',      name: 'Warm',    css: 'hue-rotate(-15deg) saturate(1.2) brightness(1.05)',      cmd: { type: 'warm', intensity: 1.0 } },
+  { id: 'fade',      name: 'Fade',    css: 'contrast(0.7) brightness(1.2) saturate(0.8)',            cmd: { type: 'fade', intensity: 1.0 } },
+  { id: 'drama',     name: 'Drama',   css: 'contrast(1.5) brightness(0.85) saturate(0.7)',           cmd: { type: 'drama', intensity: 1.0 } },
+  { id: 'cross',     name: 'Cross',   css: 'saturate(1.5) hue-rotate(15deg) contrast(1.1)',          cmd: { type: 'cross-process', intensity: 1.0 } },
+  { id: 'sketch',    name: 'Sketch',  css: 'grayscale(1) contrast(4) brightness(1.5)',               cmd: { type: 'sketch' } },
+]
+
+// ── Duotone presets ───────────────────────────────────────────────────────────
+
+interface DuotonePair {
+  name: string
+  shadow: [number, number, number]
+  highlight: [number, number, number]
+}
+
+const DUOTONE_PAIRS: DuotonePair[] = [
+  { name: 'Gold / Teal',     shadow: [60, 20, 0],    highlight: [200, 230, 120] },
+  { name: 'Purple / Yellow', shadow: [80, 0, 120],   highlight: [250, 220, 0]   },
+  { name: 'Cyan / Red',      shadow: [0, 80, 140],   highlight: [220, 40, 20]   },
+  { name: 'Navy / Peach',    shadow: [10, 20, 80],   highlight: [255, 180, 120] },
+  { name: 'Forest / Sun',    shadow: [20, 60, 20],   highlight: [255, 220, 80]  },
+  { name: 'Noir / Blanc',    shadow: [20, 20, 20],   highlight: [240, 240, 240] },
+]
+
+// ── Slider ────────────────────────────────────────────────────────────────────
+
+interface SliderProps {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  unit?: string
+  onChange: (v: number) => void
+  onCommit: (v: number) => void
+}
+
+function Slider({ label, value, min, max, step, unit = '', onChange, onCommit }: SliderProps) {
+  const display = Number.isInteger(step) ? value.toFixed(0) : value.toFixed(2)
+  return (
+    <div className="flex flex-col gap-0.5 px-3 py-1.5">
+      <div className="flex justify-between text-xs text-slate-400">
+        <span>{label}</span>
+        <span className="font-mono text-slate-300">{display}{unit}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        className="w-full h-1 accent-indigo-500 cursor-pointer"
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        onPointerUp={(e) => onCommit(parseFloat((e.target as HTMLInputElement).value))}
+        onKeyUp={(e) => onCommit(parseFloat((e.target as HTMLInputElement).value))}
+      />
+    </div>
+  )
+}
+
+// ── Section accordion ─────────────────────────────────────────────────────────
+
+interface SectionProps {
+  title: string
+  open: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}
+
+function Section({ title, open, onToggle, children }: SectionProps) {
+  return (
+    <div className="border-t border-slate-700/60">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/40 transition-colors"
+      >
+        <span>{title}</span>
+        <svg
+          width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"
+          className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+        >
+          <polyline points="2 4 6 8 10 4" />
+        </svg>
+      </button>
+      {open && <div className="pb-2">{children}</div>}
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilterChange }: FiltersPanelProps) {
+  const [openSection, setOpenSection] = useState<string | null>(null)
+
+  // Grayscale channel mixer state
+  const [gR, setGR] = useState(0.299)
+  const [gG, setGG] = useState(0.587)
+  const [gB, setGB] = useState(0.114)
+  const gRef = useRef({ r: 0.299, g: 0.587, b: 0.114 })
+
+  // Vignette state
+  const [vigStrength, setVigStrength] = useState(0.7)
+  const [vigFeather, setVigFeather] = useState(0.5)
+  const vigRef = useRef({ strength: 0.7, feather: 0.5 })
+
+  // Grain state
+  const [grainAmount, setGrainAmount] = useState(0.3)
+  const [grainMono, setGrainMono] = useState(true)
+  const grainRef = useRef({ amount: 0.3, monochrome: true })
+
+  // Pixelate state
+  const [pixelSize, setPixelSize] = useState(10)
+  const pixelRef = useRef(10)
+
+  // Posterize state
+  const [posterLevels, setPosterLevels] = useState(4)
+  const posterRef = useRef(4)
+
+  // In-flight queue
+  const inFlightRef = useRef(false)
+  const pendingRef = useRef<FilterCommand | null>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+
+  const showOverlay = () => { if (overlayRef.current) overlayRef.current.style.display = 'block' }
+  const hideOverlay = () => { if (overlayRef.current) overlayRef.current.style.display = 'none' }
+
+  const commitToRust = useCallback(async (cmd: FilterCommand) => {
+    if (inFlightRef.current) { pendingRef.current = cmd; return }
+    inFlightRef.current = true
+    showOverlay()
+    try {
+      await onApply(cmd)
+      while (pendingRef.current) {
+        const next = pendingRef.current; pendingRef.current = null
+        await onApply(next)
+      }
+    } finally {
+      inFlightRef.current = false
+      hideOverlay()
+      onPreviewFilterChange(null)
+    }
+  }, [onApply, onPreviewFilterChange])
+
+  const toggleSection = (name: string) => setOpenSection((s) => (s === name ? null : name))
+
+  if (!tabId) return null
+
+  return (
+    <div className="w-64 shrink-0 bg-slate-900 border-l border-slate-700 flex flex-col overflow-hidden relative">
+      {/* Overlay */}
+      <div
+        ref={overlayRef}
+        className="absolute inset-0 bg-slate-900/70 z-10 flex items-center justify-center"
+        style={{ display: isLoading ? 'block' : 'none' }}
+      />
+
+      {/* Header */}
+      <div className="px-3 py-2.5 border-b border-slate-700 shrink-0">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-slate-200">Filtres</span>
+          {isLoading && (
+            <svg className="animate-spin w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+          )}
+        </div>
+        {isLoading && <div className="mt-1.5 h-0.5 bg-indigo-500/30 rounded animate-pulse" />}
+      </div>
+
+      <div className="overflow-y-auto flex-1">
+        {/* Preset grid */}
+        <div
+          className="grid grid-cols-3 gap-1.5 p-2"
+          onMouseLeave={() => onPreviewFilterChange(null)}
+        >
+          {PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              className="flex flex-col items-center gap-1 p-1 rounded hover:bg-slate-700/50 transition-colors group"
+              onMouseEnter={() => onPreviewFilterChange(preset.css)}
+              onClick={() => commitToRust(preset.cmd)}
+              title={preset.name}
+            >
+              <div className="w-full aspect-video overflow-hidden rounded-sm bg-slate-800">
+                {image ? (
+                  <img
+                    src={image.preview}
+                    alt={preset.name}
+                    className="w-full h-full object-cover"
+                    style={{ filter: preset.css, imageRendering: 'auto' }}
+                    draggable={false}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-700/50" />
+                )}
+              </div>
+              <span className="text-[10px] text-slate-400 group-hover:text-slate-200 transition-colors leading-none">
+                {preset.name}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Parametric sections */}
+        <Section title="Mélangeur N&B" open={openSection === 'grayscale'} onToggle={() => toggleSection('grayscale')}>
+          <Slider
+            label="Rouge" value={gR} min={0} max={1} step={0.01}
+            onChange={(v) => { setGR(v); gRef.current.r = v; onPreviewFilterChange('grayscale(1)') }}
+            onCommit={() => commitToRust({ type: 'grayscale', rWeight: gRef.current.r, gWeight: gRef.current.g, bWeight: gRef.current.b })}
+          />
+          <Slider
+            label="Vert" value={gG} min={0} max={1} step={0.01}
+            onChange={(v) => { setGG(v); gRef.current.g = v; onPreviewFilterChange('grayscale(1)') }}
+            onCommit={() => commitToRust({ type: 'grayscale', rWeight: gRef.current.r, gWeight: gRef.current.g, bWeight: gRef.current.b })}
+          />
+          <Slider
+            label="Bleu" value={gB} min={0} max={1} step={0.01}
+            onChange={(v) => { setGB(v); gRef.current.b = v; onPreviewFilterChange('grayscale(1)') }}
+            onCommit={() => commitToRust({ type: 'grayscale', rWeight: gRef.current.r, gWeight: gRef.current.g, bWeight: gRef.current.b })}
+          />
+        </Section>
+
+        <Section title="Vignette" open={openSection === 'vignette'} onToggle={() => toggleSection('vignette')}>
+          <Slider
+            label="Force" value={vigStrength} min={0} max={1} step={0.01}
+            onChange={(v) => { setVigStrength(v); vigRef.current.strength = v }}
+            onCommit={() => commitToRust({ type: 'vignette', strength: vigRef.current.strength, feather: vigRef.current.feather })}
+          />
+          <Slider
+            label="Douceur" value={vigFeather} min={0.05} max={1} step={0.01}
+            onChange={(v) => { setVigFeather(v); vigRef.current.feather = v }}
+            onCommit={() => commitToRust({ type: 'vignette', strength: vigRef.current.strength, feather: vigRef.current.feather })}
+          />
+        </Section>
+
+        <Section title="Grain" open={openSection === 'grain'} onToggle={() => toggleSection('grain')}>
+          <Slider
+            label="Intensité" value={grainAmount} min={0} max={1} step={0.01}
+            onChange={(v) => { setGrainAmount(v); grainRef.current.amount = v }}
+            onCommit={() => commitToRust({ type: 'grain', amount: grainRef.current.amount, monochrome: grainRef.current.monochrome })}
+          />
+          <div className="flex items-center gap-2 px-3 py-1.5">
+            <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={grainMono}
+                className="accent-indigo-500 w-3.5 h-3.5"
+                onChange={(e) => {
+                  const v = e.target.checked
+                  setGrainMono(v)
+                  grainRef.current.monochrome = v
+                  commitToRust({ type: 'grain', amount: grainRef.current.amount, monochrome: v })
+                }}
+              />
+              Monochrome
+            </label>
+          </div>
+        </Section>
+
+        <Section title="Pixeliser" open={openSection === 'pixelate'} onToggle={() => toggleSection('pixelate')}>
+          <Slider
+            label="Taille" value={pixelSize} min={2} max={100} step={1} unit="px"
+            onChange={(v) => { setPixelSize(v); pixelRef.current = v }}
+            onCommit={() => commitToRust({ type: 'pixelate', size: pixelRef.current })}
+          />
+        </Section>
+
+        <Section title="Postérisé" open={openSection === 'posterize'} onToggle={() => toggleSection('posterize')}>
+          <Slider
+            label="Niveaux" value={posterLevels} min={2} max={16} step={1}
+            onChange={(v) => { setPosterLevels(v); posterRef.current = v }}
+            onCommit={() => commitToRust({ type: 'posterize', levels: posterRef.current })}
+          />
+        </Section>
+
+        <Section title="Duotone" open={openSection === 'duotone'} onToggle={() => toggleSection('duotone')}>
+          <div className="px-3 pt-1 pb-2 flex flex-col gap-1">
+            {DUOTONE_PAIRS.map((pair) => (
+              <button
+                key={pair.name}
+                onClick={() => commitToRust({
+                  type: 'duotone',
+                  shadowR: pair.shadow[0], shadowG: pair.shadow[1], shadowB: pair.shadow[2],
+                  highlightR: pair.highlight[0], highlightG: pair.highlight[1], highlightB: pair.highlight[2],
+                })}
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-slate-300 hover:bg-slate-700/60 hover:text-white transition-colors text-left"
+              >
+                <span
+                  className="w-4 h-4 rounded-sm shrink-0 border border-slate-600"
+                  style={{ background: `rgb(${pair.shadow[0]},${pair.shadow[1]},${pair.shadow[2]})` }}
+                />
+                <span
+                  className="w-4 h-4 rounded-sm shrink-0 border border-slate-600"
+                  style={{ background: `rgb(${pair.highlight[0]},${pair.highlight[1]},${pair.highlight[2]})` }}
+                />
+                {pair.name}
+              </button>
+            ))}
+          </div>
+        </Section>
+      </div>
+    </div>
+  )
+}

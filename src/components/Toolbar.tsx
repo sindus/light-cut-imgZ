@@ -7,6 +7,8 @@ interface ToolbarProps {
   showFlipBar?: boolean
   showAdjustments?: boolean
   onAdjustmentsOpen?: () => void
+  showFilters?: boolean
+  onFiltersOpen?: () => void
   onCropMode: () => void
   onRotateMode: () => void
   onFlipOpen: () => void
@@ -68,6 +70,8 @@ export function Toolbar({
   showFlipBar,
   showAdjustments,
   onAdjustmentsOpen,
+  showFilters,
+  onFiltersOpen,
   onCropMode,
   onRotateMode,
   onFlipOpen,
@@ -113,6 +117,9 @@ export function Toolbar({
       </SidebarBtn>
       <SidebarBtn onClick={onAdjustmentsOpen} disabled={disabled} active={showAdjustments} title="Adjustments" aria-label="Adjustments" aria-pressed={showAdjustments}>
         <AdjustmentsIcon />
+      </SidebarBtn>
+      <SidebarBtn onClick={onFiltersOpen} disabled={disabled} active={showFilters} title="Filtres" aria-label="Filtres" aria-pressed={showFilters}>
+        <FiltersIcon />
       </SidebarBtn>
 
       <Sep />
@@ -250,6 +257,16 @@ function AdjustmentsIcon() {
       <circle cx="8" cy="6" r="2" fill="currentColor" stroke="none" />
       <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none" />
       <circle cx="10" cy="18" r="2" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+function FiltersIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3" strokeLinecap="round" />
+      <path d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" strokeLinecap="round" />
     </svg>
   )
 }
