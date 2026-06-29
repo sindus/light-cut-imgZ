@@ -1,6 +1,8 @@
 import { listen } from '@tauri-apps/api/event'
 import { useEffect, useRef, useState } from 'react'
 import { AboutDialog } from './components/AboutDialog'
+import { AdjustmentsPanel } from './components/AdjustmentsPanel'
+import type { AdjustmentCommand } from './components/AdjustmentsPanel'
 import { Canvas } from './components/Canvas'
 import { CanvasResizeDialog } from './components/CanvasResizeDialog'
 import { CropControls } from './components/CropControls'
@@ -62,6 +64,15 @@ export default function App() {
     exitRotateMode,
     setZoom,
     clearError,
+    handleAdjustBrightnessContrast,
+    handleAdjustExposure,
+    handleAdjustHueSaturation,
+    handleAdjustVibrance,
+    handleAdjustLevels,
+    handleAdjustCurves,
+    handleAdjustWhiteBalance,
+    handleAdjustSharpen,
+    handleAdjustDenoise,
   } = useImageEditor()
 
   const [exportOpen, setExportOpen] = useState(false)
@@ -81,6 +92,8 @@ export default function App() {
   const [recentFiles, setRecentFiles] = useState<string[]>(() => getRecentFiles())
   const [pickedColor, setPickedColor] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
   const [pickedColorResult, setPickedColorResult] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
+  const [showAdjustments, setShowAdjustments] = useState(false)
+  const [previewFilter, setPreviewFilter] = useState<string | null>(null)
 
   const activeTabIdRef = useRef(activeTabId)
   useEffect(() => {
@@ -195,6 +208,20 @@ export default function App() {
       enterEyedropperMode()
     }
   }
+  const handleAdjustmentCommand = async (cmd: AdjustmentCommand) => {
+    switch (cmd.type) {
+      case 'brightness-contrast': await handleAdjustBrightnessContrast(cmd.brightness, cmd.contrast); break
+      case 'exposure': await handleAdjustExposure(cmd.exposure); break
+      case 'hue-saturation': await handleAdjustHueSaturation(cmd.hue, cmd.saturation, cmd.lightness); break
+      case 'vibrance': await handleAdjustVibrance(cmd.vibrance); break
+      case 'levels': await handleAdjustLevels(cmd.inBlack, cmd.inWhite, cmd.gamma, cmd.outBlack, cmd.outWhite); break
+      case 'curves': await handleAdjustCurves(cmd.points); break
+      case 'white-balance': await handleAdjustWhiteBalance(cmd.temperature, cmd.tint); break
+      case 'sharpen': await handleAdjustSharpen(cmd.amount, cmd.radius, cmd.threshold); break
+      case 'denoise': await handleAdjustDenoise(cmd.strength); break
+    }
+  }
+
   const onFlipOpen = () => {
     if (mode === 'cropping') exitCropMode()
     else if (mode === 'rotating') exitRotateMode()
@@ -224,6 +251,8 @@ export default function App() {
         onToggleExif={() => setShowExif((p) => !p)}
         showGrid={showGrid}
         onToggleGrid={() => setShowGrid((g) => !g)}
+        showAdjustments={showAdjustments}
+        onAdjustmentsOpen={() => setShowAdjustments((p) => !p)}
         onCopy={handleCopyToClipboard}
         onEyedropperMode={onEyedropperMode}
         onPrefsOpen={() => setPrefsOpen(true)}
@@ -293,7 +322,17 @@ export default function App() {
             onOpenByPaths={handleOpenByPaths}
             onColorPick={setPickedColor}
             onColorPickConfirm={handleColorPickConfirm}
+            previewFilter={previewFilter}
           />
+
+          {showAdjustments && (
+            <AdjustmentsPanel
+              tabId={activeTabId}
+              isLoading={isLoading}
+              onApply={handleAdjustmentCommand}
+              onPreviewFilterChange={setPreviewFilter}
+            />
+          )}
 
           {showHistory && (
             <HistoryPanel

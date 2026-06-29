@@ -120,3 +120,40 @@ export async function getExif(tabId: string): Promise<ExifField[]> {
 export async function stripExif(tabId: string): Promise<boolean> {
   return invoke<boolean>('strip_exif', { tabId })
 }
+
+export async function adjustBrightnessContrast(tabId: string, brightness: number, contrast: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_brightness_contrast', { tabId, brightness, contrast }))
+}
+
+export async function adjustExposure(tabId: string, exposure: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_exposure', { tabId, exposure }))
+}
+
+export async function adjustHueSaturation(tabId: string, hue: number, saturation: number, lightness: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_hue_saturation', { tabId, hue, saturation, lightness }))
+}
+
+export async function adjustVibrance(tabId: string, vibrance: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_vibrance', { tabId, vibrance }))
+}
+
+export async function adjustLevels(tabId: string, inBlack: number, inWhite: number, gamma: number, outBlack: number, outWhite: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_levels', { tabId, inBlack, inWhite, gamma, outBlack, outWhite }))
+}
+
+export async function adjustCurves(tabId: string, points: [number, number][]): Promise<ImageMeta> {
+  const mapped = points.map(([x, y]) => [x, y] as [number, number])
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_curves', { tabId, points: mapped }))
+}
+
+export async function adjustWhiteBalance(tabId: string, temperature: number, tint: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_white_balance', { tabId, temperature, tint }))
+}
+
+export async function adjustSharpen(tabId: string, amount: number, radius: number, threshold: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_sharpen', { tabId, amount, radius, threshold }))
+}
+
+export async function adjustDenoise(tabId: string, strength: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('adjust_denoise', { tabId, strength }))
+}

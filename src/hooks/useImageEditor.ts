@@ -1,5 +1,14 @@
 import { useCallback, useState } from 'react'
 import {
+  adjustBrightnessContrast,
+  adjustCurves,
+  adjustDenoise,
+  adjustExposure,
+  adjustHueSaturation,
+  adjustLevels,
+  adjustSharpen,
+  adjustVibrance,
+  adjustWhiteBalance,
   canvasResizeImage,
   closeAllTabs,
   closeOtherTabs,
@@ -75,6 +84,15 @@ interface ImageEditorActions {
   exitRotateMode: () => void
   setZoom: (z: number | ((prev: number) => number)) => void
   clearError: () => void
+  handleAdjustBrightnessContrast: (brightness: number, contrast: number) => Promise<void>
+  handleAdjustExposure: (exposure: number) => Promise<void>
+  handleAdjustHueSaturation: (hue: number, saturation: number, lightness: number) => Promise<void>
+  handleAdjustVibrance: (vibrance: number) => Promise<void>
+  handleAdjustLevels: (inBlack: number, inWhite: number, gamma: number, outBlack: number, outWhite: number) => Promise<void>
+  handleAdjustCurves: (points: [number, number][]) => Promise<void>
+  handleAdjustWhiteBalance: (temperature: number, tint: number) => Promise<void>
+  handleAdjustSharpen: (amount: number, radius: number, threshold: number) => Promise<void>
+  handleAdjustDenoise: (strength: number) => Promise<void>
 }
 
 export function useImageEditor(): ImageEditorState & ImageEditorActions {
@@ -334,6 +352,63 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     })
   }, [withLoading])
 
+  const applyAdjustment = useCallback(
+    async (label: string, fn: (id: string) => ReturnType<typeof adjustBrightnessContrast>) => {
+      if (!activeTabId) return
+      const id = activeTabId
+      await withLoading(async () => {
+        const result = await fn(id)
+        updateTab(id, (tab) => {
+          const [nextHistory, nextIndex] = pushHistory(tab.history, tab.historyIndex, label)
+          return { ...tab, image: result, history: nextHistory, historyIndex: nextIndex }
+        })
+      })
+    },
+    [withLoading, activeTabId, updateTab],
+  )
+
+  const handleAdjustBrightnessContrast = useCallback(
+    (brightness: number, contrast: number) =>
+      applyAdjustment('Brightness/Contrast', (id) => adjustBrightnessContrast(id, brightness, contrast)),
+    [applyAdjustment],
+  )
+  const handleAdjustExposure = useCallback(
+    (exposure: number) => applyAdjustment('Exposure', (id) => adjustExposure(id, exposure)),
+    [applyAdjustment],
+  )
+  const handleAdjustHueSaturation = useCallback(
+    (hue: number, saturation: number, lightness: number) =>
+      applyAdjustment('Hue/Saturation', (id) => adjustHueSaturation(id, hue, saturation, lightness)),
+    [applyAdjustment],
+  )
+  const handleAdjustVibrance = useCallback(
+    (vibrance: number) => applyAdjustment('Vibrance', (id) => adjustVibrance(id, vibrance)),
+    [applyAdjustment],
+  )
+  const handleAdjustLevels = useCallback(
+    (inBlack: number, inWhite: number, gamma: number, outBlack: number, outWhite: number) =>
+      applyAdjustment('Levels', (id) => adjustLevels(id, inBlack, inWhite, gamma, outBlack, outWhite)),
+    [applyAdjustment],
+  )
+  const handleAdjustCurves = useCallback(
+    (points: [number, number][]) => applyAdjustment('Curves', (id) => adjustCurves(id, points)),
+    [applyAdjustment],
+  )
+  const handleAdjustWhiteBalance = useCallback(
+    (temperature: number, tint: number) =>
+      applyAdjustment('White Balance', (id) => adjustWhiteBalance(id, temperature, tint)),
+    [applyAdjustment],
+  )
+  const handleAdjustSharpen = useCallback(
+    (amount: number, radius: number, threshold: number) =>
+      applyAdjustment('Sharpen', (id) => adjustSharpen(id, amount, radius, threshold)),
+    [applyAdjustment],
+  )
+  const handleAdjustDenoise = useCallback(
+    (strength: number) => applyAdjustment('Denoise', (id) => adjustDenoise(id, strength)),
+    [applyAdjustment],
+  )
+
   const enterCropMode = useCallback(() => setMode('cropping'), [])
   const exitCropMode = useCallback(() => setMode('idle'), [])
   const enterRotateMode = useCallback(() => setMode('rotating'), [])
@@ -379,5 +454,14 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     exitRotateMode,
     setZoom,
     clearError,
+    handleAdjustBrightnessContrast,
+    handleAdjustExposure,
+    handleAdjustHueSaturation,
+    handleAdjustVibrance,
+    handleAdjustLevels,
+    handleAdjustCurves,
+    handleAdjustWhiteBalance,
+    handleAdjustSharpen,
+    handleAdjustDenoise,
   }
 }

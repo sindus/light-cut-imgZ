@@ -5,6 +5,8 @@ interface ToolbarProps {
   mode: EditorMode
   isLoading: boolean
   showFlipBar?: boolean
+  showAdjustments?: boolean
+  onAdjustmentsOpen?: () => void
   onCropMode: () => void
   onRotateMode: () => void
   onFlipOpen: () => void
@@ -64,6 +66,8 @@ export function Toolbar({
   mode,
   isLoading,
   showFlipBar,
+  showAdjustments,
+  onAdjustmentsOpen,
   onCropMode,
   onRotateMode,
   onFlipOpen,
@@ -106,6 +110,9 @@ export function Toolbar({
       </SidebarBtn>
       <SidebarBtn onClick={onEyedropperMode} disabled={disabled} active={mode === 'eyedropper'} title="Color picker" aria-label="Color picker" aria-pressed={mode === 'eyedropper'}>
         <EyedropperIcon />
+      </SidebarBtn>
+      <SidebarBtn onClick={onAdjustmentsOpen} disabled={disabled} active={showAdjustments} title="Adjustments" aria-label="Adjustments" aria-pressed={showAdjustments}>
+        <AdjustmentsIcon />
       </SidebarBtn>
 
       <Sep />
@@ -230,6 +237,19 @@ function GearIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  )
+}
+
+function AdjustmentsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+      <circle cx="8" cy="6" r="2" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="18" r="2" fill="currentColor" stroke="none" />
     </svg>
   )
 }
