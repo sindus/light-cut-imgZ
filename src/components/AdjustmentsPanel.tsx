@@ -267,16 +267,26 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
   const wbRef = useRef(WB_DEF)
   const sharpenRef = useRef(SHARPEN_DEF)
 
-  // Rust call queue: at most one in-flight + one pending
+  // Overlay driven imperatively so it appears in the same frame as pointerUp,
+  // without waiting for a React re-render (which would be too late).
+  const overlayRef = useRef<HTMLDivElement>(null)
   const inFlightRef = useRef(false)
   const pendingRef = useRef<AdjustmentCommand | null>(null)
 
+  const showOverlay = () => {
+    if (overlayRef.current) overlayRef.current.style.display = 'block'
+  }
+  const hideOverlay = () => {
+    if (overlayRef.current) overlayRef.current.style.display = 'none'
+  }
+
   const commitToRust = useCallback(async (cmd: AdjustmentCommand) => {
     if (inFlightRef.current) {
-      pendingRef.current = cmd  // Replace with the latest — we only need the final value
+      pendingRef.current = cmd
       return
     }
     inFlightRef.current = true
+    showOverlay()
     try {
       await onApply(cmd)
       while (pendingRef.current) {
@@ -286,6 +296,7 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
       }
     } finally {
       inFlightRef.current = false
+      hideOverlay()
       onPreviewFilterChange(null)
     }
   }, [onApply, onPreviewFilterChange])
@@ -314,9 +325,12 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
       </div>
 
       <div className="overflow-y-auto flex-1 relative">
-        {isLoading && (
-          <div className="absolute inset-0 z-10 bg-slate-900/60 cursor-wait" />
-        )}
+        {/* Always in DOM, shown/hidden imperatively to avoid React re-render lag */}
+        <div
+          ref={overlayRef}
+          className="absolute inset-0 z-10 bg-slate-900/60 cursor-wait"
+          style={{ display: isLoading ? 'block' : 'none' }}
+        />
 
         <Section id="bc" title="Brightness / Contrast" open={open === 'bc'} onToggle={toggle}>
           <Slider label="Brightness" value={bc.brightness} min={-100} max={100} step={1}
