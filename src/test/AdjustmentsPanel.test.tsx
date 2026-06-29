@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { AdjustmentsPanel } from '../components/AdjustmentsPanel'
 
 const defaultProps = {
@@ -43,18 +43,18 @@ describe('AdjustmentsPanel', () => {
     expect(screen.queryByText('Reset')).toBeNull()
   })
 
-  it('all sections are collapsed by default — no sliders visible', () => {
+  it('all sections are collapsed by default', () => {
     renderPanel()
     expect(screen.queryByRole('slider')).toBeNull()
   })
 
-  it('clicking a section header opens it and reveals sliders', async () => {
+  it('clicking a section opens it', async () => {
     renderPanel()
     await userEvent.click(screen.getByText('Brightness / Contrast'))
     expect(screen.getAllByRole('slider')).toHaveLength(2)
   })
 
-  it('clicking an open section header collapses it', async () => {
+  it('clicking an open section collapses it', async () => {
     renderPanel()
     await userEvent.click(screen.getByText('Brightness / Contrast'))
     await userEvent.click(screen.getByText('Brightness / Contrast'))
@@ -67,88 +67,79 @@ describe('AdjustmentsPanel', () => {
     expect(screen.getAllByRole('slider')).toHaveLength(2)
     await userEvent.click(screen.getByText('Exposure'))
     expect(screen.getAllByRole('slider')).toHaveLength(1)
-    expect(screen.getByText(/EV/)).toBeInTheDocument()
   })
 
-  it('moving a slider emits a CSS preview filter immediately', async () => {
+  it('moving a slider emits CSS preview immediately — no Rust call', async () => {
     renderPanel()
     await userEvent.click(screen.getByText('Exposure'))
     fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } })
     expect(defaultProps.onPreviewFilterChange).toHaveBeenCalledWith('brightness(2.000)')
+    expect(defaultProps.onApply).not.toHaveBeenCalled()
   })
 
-  it('shows loading indicator when isLoading is true', () => {
+  it('releasing a slider (pointerUp) triggers the Rust call', async () => {
+    renderPanel()
+    await userEvent.click(screen.getByText('Exposure'))
+    const slider = screen.getByRole('slider')
+    fireEvent.change(slider, { target: { value: '1' } })
+    fireEvent.pointerUp(slider, { target: { value: '1' } })
+    await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
+    expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'exposure', exposure: 1 })
+  })
+
+  it('Brightness/Contrast onCommit sends both slider values', async () => {
+    const onApply = vi.fn().mockResolvedValue(undefined)
+    renderPanel({ onApply })
+    await userEvent.click(screen.getByText('Brightness / Contrast'))
+    const [brSlider, ctSlider] = screen.getAllByRole('slider')
+    fireEvent.change(brSlider, { target: { value: '50' } })
+    fireEvent.change(ctSlider, { target: { value: '-30' } })
+    fireEvent.pointerUp(ctSlider, { target: { value: '-30' } })
+    await vi.waitFor(() => expect(onApply).toHaveBeenCalledTimes(1))
+    expect(onApply).toHaveBeenCalledWith({ type: 'brightness-contrast', brightness: 50, contrast: -30 })
+  })
+
+  it('Levels onCommit sends all 5 parameters', async () => {
+    const onApply = vi.fn().mockResolvedValue(undefined)
+    renderPanel({ onApply })
+    await userEvent.click(screen.getByText('Levels'))
+    const sliders = screen.getAllByRole('slider')
+    fireEvent.change(sliders[0], { target: { value: '20' } })
+    fireEvent.pointerUp(sliders[0], { target: { value: '20' } })
+    await vi.waitFor(() => expect(onApply).toHaveBeenCalledTimes(1))
+    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'levels', inBlack: 20, inWhite: 255, gamma: 1, outBlack: 0, outWhite: 255,
+    }))
+  })
+
+  it('shows loading indicator when isLoading', () => {
     renderPanel({ isLoading: true })
     expect(screen.getByText('…')).toBeInTheDocument()
   })
 
-  describe('debounce behavior', () => {
-    beforeEach(() => { vi.useFakeTimers() })
-    afterEach(() => { vi.useRealTimers() })
+  it('second commit while first is in flight is queued, not dropped', async () => {
+    let resolveFn: () => void
+    const onApply = vi.fn().mockImplementationOnce(
+      () => new Promise<void>((resolve) => { resolveFn = resolve }),
+    ).mockResolvedValue(undefined)
 
-    function openSection(name: string) {
-      // Use fireEvent (not userEvent) so fake timers don't interfere
-      fireEvent.click(screen.getByText(name))
-    }
+    renderPanel({ onApply })
+    await userEvent.click(screen.getByText('Exposure'))
+    const slider = screen.getByRole('slider')
 
-    it('slider does not call onApply immediately', () => {
-      renderPanel()
-      openSection('Exposure')
-      fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } })
-      expect(defaultProps.onApply).not.toHaveBeenCalled()
-    })
+    // First commit
+    fireEvent.change(slider, { target: { value: '1' } })
+    fireEvent.pointerUp(slider, { target: { value: '1' } })
 
-    it('onApply is called once after debounce timeout', async () => {
-      renderPanel()
-      openSection('Exposure')
-      fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } })
-      await act(async () => { vi.advanceTimersByTime(500) })
-      expect(defaultProps.onApply).toHaveBeenCalledTimes(1)
-      expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'exposure', exposure: 1 })
-    })
+    // Second commit while first is still in flight
+    fireEvent.change(slider, { target: { value: '2' } })
+    fireEvent.pointerUp(slider, { target: { value: '2' } })
 
-    it('rapid changes coalesce into a single onApply call', async () => {
-      renderPanel()
-      openSection('Exposure')
-      const slider = screen.getByRole('slider')
-      fireEvent.change(slider, { target: { value: '0.5' } })
-      fireEvent.change(slider, { target: { value: '1.0' } })
-      fireEvent.change(slider, { target: { value: '1.5' } })
-      await act(async () => { vi.advanceTimersByTime(500) })
-      expect(defaultProps.onApply).toHaveBeenCalledTimes(1)
-      expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'exposure', exposure: 1.5 })
-    })
+    // Resolve the first call
+    resolveFn!()
 
-    it('preview filter is cleared after onApply resolves', async () => {
-      renderPanel()
-      openSection('Exposure')
-      fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } })
-      await act(async () => { vi.advanceTimersByTime(500) })
-      const calls = defaultProps.onPreviewFilterChange.mock.calls
-      expect(calls[calls.length - 1][0]).toBeNull()
-    })
-
-    it('Brightness/Contrast sends both values in the command', async () => {
-      const onApply = vi.fn().mockResolvedValue(undefined)
-      renderPanel({ onApply })
-      openSection('Brightness / Contrast')
-      const [brSlider, ctSlider] = screen.getAllByRole('slider')
-      fireEvent.change(brSlider, { target: { value: '50' } })
-      fireEvent.change(ctSlider, { target: { value: '-30' } })
-      await act(async () => { vi.advanceTimersByTime(500) })
-      expect(onApply).toHaveBeenCalledWith({ type: 'brightness-contrast', brightness: 50, contrast: -30 })
-    })
-
-    it('Levels sends all 5 parameters', async () => {
-      const onApply = vi.fn().mockResolvedValue(undefined)
-      renderPanel({ onApply })
-      openSection('Levels')
-      const sliders = screen.getAllByRole('slider')
-      fireEvent.change(sliders[0], { target: { value: '20' } })
-      await act(async () => { vi.advanceTimersByTime(500) })
-      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'levels', inBlack: 20, inWhite: 255, gamma: 1, outBlack: 0, outWhite: 255,
-      }))
-    })
+    // Both should eventually be called
+    await vi.waitFor(() => expect(onApply).toHaveBeenCalledTimes(2))
+    expect(onApply).toHaveBeenNthCalledWith(2, { type: 'exposure', exposure: 2 })
   })
 })

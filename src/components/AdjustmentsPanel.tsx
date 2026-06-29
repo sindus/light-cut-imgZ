@@ -75,10 +75,11 @@ function findNearest(cx: number, cy: number, pts: [number, number][]): number {
 }
 
 function CurvesEditor({
-  userPoints, onChange,
+  userPoints, onChange, onCommit,
 }: {
   userPoints: [number, number][]
   onChange: (pts: [number, number][]) => void
+  onCommit: (pts: [number, number][]) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const dragIdxRef = useRef<number | null>(null)
@@ -145,10 +146,12 @@ function CurvesEditor({
     ptsRef.current = pts; onChange(pts)
   }
 
-  const handleMouseUp = () => {
+  const finalizeDrag = () => {
     if (dragIdxRef.current !== null) {
       const sorted: [number, number][] = [...ptsRef.current].sort((a, b) => a[0] - b[0])
-      ptsRef.current = sorted; onChange(sorted)
+      ptsRef.current = sorted
+      onChange(sorted)
+      onCommit(sorted)
     }
     dragIdxRef.current = null
   }
@@ -159,7 +162,7 @@ function CurvesEditor({
     const idx = findNearest(cx, cy, ptsRef.current)
     if (idx >= 0) {
       const newPts = ptsRef.current.filter((_, i) => i !== idx)
-      ptsRef.current = newPts; onChange(newPts)
+      ptsRef.current = newPts; onChange(newPts); onCommit(newPts)
     }
   }
 
@@ -170,7 +173,7 @@ function CurvesEditor({
         className="w-full rounded border border-slate-700 cursor-crosshair"
         style={{ imageRendering: 'pixelated' }}
         onMouseDown={handleMouseDown} onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
+        onMouseUp={finalizeDrag} onMouseLeave={finalizeDrag}
         onContextMenu={handleContextMenu}
       />
       <p className="text-xs text-slate-600">Click to add · Drag to move · Right-click to remove</p>
@@ -178,15 +181,19 @@ function CurvesEditor({
   )
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Slider ──────────────────────────────────────────────────────────────────
 
 function Slider({
-  label, value, min, max, step, unit, onChange,
+  label, value, min, max, step, unit, onChange, onCommit,
 }: {
   label: string; value: number; min: number; max: number; step: number; unit?: string
   onChange: (v: number) => void
+  onCommit: (v: number) => void
 }) {
   const decimals = step < 0.1 ? 2 : step < 1 ? 1 : 0
+  const readValue = (e: React.SyntheticEvent<HTMLInputElement>) =>
+    parseFloat((e.target as HTMLInputElement).value)
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-xs text-slate-400">
@@ -195,7 +202,9 @@ function Slider({
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
+        onChange={(e) => onChange(readValue(e))}
+        onPointerUp={(e) => onCommit(readValue(e))}
+        onKeyUp={(e) => onCommit(readValue(e))}
         className="w-full accent-indigo-500" style={{ height: '4px' }}
       />
     </div>
@@ -236,6 +245,8 @@ const SHARPEN_DEF = { amount: 100, radius: 1.0, threshold: 0 }
 
 export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterChange }: AdjustmentsPanelProps) {
   const [open, setOpen] = useState<string | null>(null)
+
+  // Display state (drives slider UI)
   const [bc, setBc] = useState(BC_DEF)
   const [exposure, setExposure] = useState(0)
   const [hsl, setHsl] = useState(HSL_DEF)
@@ -246,24 +257,38 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
   const [sharpen, setSharpen] = useState(SHARPEN_DEF)
   const [denoise, setDenoise] = useState(0)
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Refs mirror state for sync reads in event handlers
+  const bcRef = useRef(BC_DEF)
+  const hslRef = useRef(HSL_DEF)
+  const levelsRef = useRef(LEVELS_DEF)
+  const wbRef = useRef(WB_DEF)
+  const sharpenRef = useRef(SHARPEN_DEF)
 
-  const schedule = useCallback((cmd: AdjustmentCommand, cssPreview?: string | null) => {
-    if (cssPreview !== undefined) onPreviewFilterChange(cssPreview)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(async () => {
-      debounceRef.current = null
+  // Rust call queue: at most one in-flight + one pending
+  const inFlightRef = useRef(false)
+  const pendingRef = useRef<AdjustmentCommand | null>(null)
+
+  const commitToRust = useCallback(async (cmd: AdjustmentCommand) => {
+    if (inFlightRef.current) {
+      pendingRef.current = cmd  // Replace with the latest — we only need the final value
+      return
+    }
+    inFlightRef.current = true
+    try {
       await onApply(cmd)
-      onPreviewFilterChange(null)
-    }, 420)
-  }, [onApply, onPreviewFilterChange])
-
-  // Clear pending debounce and preview when tab changes
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
+      while (pendingRef.current) {
+        const next = pendingRef.current
+        pendingRef.current = null
+        await onApply(next)
+      }
+    } finally {
+      inFlightRef.current = false
       onPreviewFilterChange(null)
     }
+  }, [onApply, onPreviewFilterChange])
+
+  useEffect(() => {
+    return () => { onPreviewFilterChange(null) }
   }, [tabId, onPreviewFilterChange])
 
   if (!tabId) return null
@@ -282,132 +307,118 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
         <Section id="bc" title="Brightness / Contrast" open={open === 'bc'} onToggle={toggle}>
           <Slider label="Brightness" value={bc.brightness} min={-100} max={100} step={1}
             onChange={(v) => {
-              const next = { ...bc, brightness: v }; setBc(next)
+              const next = { ...bcRef.current, brightness: v }
+              bcRef.current = next; setBc(next)
               const f = next.brightness === 0 && next.contrast === 0 ? null
                 : `brightness(${((next.brightness + 100) / 100).toFixed(3)}) contrast(${((next.contrast + 100) / 100).toFixed(3)})`
-              schedule({ type: 'brightness-contrast', brightness: next.brightness, contrast: next.contrast }, f)
-            }} />
+              onPreviewFilterChange(f)
+            }}
+            onCommit={() => commitToRust({ type: 'brightness-contrast', ...bcRef.current })} />
           <Slider label="Contrast" value={bc.contrast} min={-100} max={100} step={1}
             onChange={(v) => {
-              const next = { ...bc, contrast: v }; setBc(next)
+              const next = { ...bcRef.current, contrast: v }
+              bcRef.current = next; setBc(next)
               const f = next.brightness === 0 && next.contrast === 0 ? null
                 : `brightness(${((next.brightness + 100) / 100).toFixed(3)}) contrast(${((next.contrast + 100) / 100).toFixed(3)})`
-              schedule({ type: 'brightness-contrast', brightness: next.brightness, contrast: next.contrast }, f)
-            }} />
+              onPreviewFilterChange(f)
+            }}
+            onCommit={() => commitToRust({ type: 'brightness-contrast', ...bcRef.current })} />
         </Section>
 
         <Section id="exposure" title="Exposure" open={open === 'exposure'} onToggle={toggle}>
           <Slider label="Exposure" value={exposure} min={-3} max={3} step={0.05} unit=" EV"
             onChange={(v) => {
               setExposure(v)
-              schedule({ type: 'exposure', exposure: v }, v === 0 ? null : `brightness(${Math.pow(2, v).toFixed(3)})`)
-            }} />
+              onPreviewFilterChange(v === 0 ? null : `brightness(${Math.pow(2, v).toFixed(3)})`)
+            }}
+            onCommit={(v) => commitToRust({ type: 'exposure', exposure: v })} />
         </Section>
 
         <Section id="hsl" title="Hue / Saturation" open={open === 'hsl'} onToggle={toggle}>
-          <Slider label="Hue" value={hsl.hue} min={-180} max={180} step={1} unit="°"
-            onChange={(v) => {
-              const next = { ...hsl, hue: v }; setHsl(next)
-              const f = next.hue === 0 && next.saturation === 0 && next.lightness === 0 ? null
-                : `hue-rotate(${next.hue}deg) saturate(${((next.saturation + 100) / 100).toFixed(3)}) brightness(${((next.lightness + 100) / 100).toFixed(3)})`
-              schedule({ type: 'hue-saturation', hue: next.hue, saturation: next.saturation, lightness: next.lightness }, f)
-            }} />
-          <Slider label="Saturation" value={hsl.saturation} min={-100} max={100} step={1}
-            onChange={(v) => {
-              const next = { ...hsl, saturation: v }; setHsl(next)
-              const f = next.hue === 0 && next.saturation === 0 && next.lightness === 0 ? null
-                : `hue-rotate(${next.hue}deg) saturate(${((next.saturation + 100) / 100).toFixed(3)}) brightness(${((next.lightness + 100) / 100).toFixed(3)})`
-              schedule({ type: 'hue-saturation', hue: next.hue, saturation: next.saturation, lightness: next.lightness }, f)
-            }} />
-          <Slider label="Lightness" value={hsl.lightness} min={-100} max={100} step={1}
-            onChange={(v) => {
-              const next = { ...hsl, lightness: v }; setHsl(next)
-              const f = next.hue === 0 && next.saturation === 0 && next.lightness === 0 ? null
-                : `hue-rotate(${next.hue}deg) saturate(${((next.saturation + 100) / 100).toFixed(3)}) brightness(${((next.lightness + 100) / 100).toFixed(3)})`
-              schedule({ type: 'hue-saturation', hue: next.hue, saturation: next.saturation, lightness: next.lightness }, f)
-            }} />
+          {(['hue', 'saturation', 'lightness'] as const).map((field) => (
+            <Slider
+              key={field}
+              label={field.charAt(0).toUpperCase() + field.slice(1)}
+              value={hsl[field]}
+              min={field === 'hue' ? -180 : -100}
+              max={field === 'hue' ? 180 : 100}
+              step={1}
+              unit={field === 'hue' ? '°' : undefined}
+              onChange={(v) => {
+                const next = { ...hslRef.current, [field]: v }
+                hslRef.current = next; setHsl(next)
+                const f = next.hue === 0 && next.saturation === 0 && next.lightness === 0 ? null
+                  : `hue-rotate(${next.hue}deg) saturate(${((next.saturation + 100) / 100).toFixed(3)}) brightness(${((next.lightness + 100) / 100).toFixed(3)})`
+                onPreviewFilterChange(f)
+              }}
+              onCommit={() => commitToRust({ type: 'hue-saturation', ...hslRef.current })}
+            />
+          ))}
         </Section>
 
         <Section id="vibrance" title="Vibrance" open={open === 'vibrance'} onToggle={toggle}>
           <Slider label="Vibrance" value={vibrance} min={-100} max={100} step={1}
             onChange={(v) => {
               setVibrance(v)
-              schedule({ type: 'vibrance', vibrance: v }, v === 0 ? null : `saturate(${((v + 100) / 100).toFixed(3)})`)
-            }} />
+              onPreviewFilterChange(v === 0 ? null : `saturate(${((v + 100) / 100).toFixed(3)})`)
+            }}
+            onCommit={(v) => commitToRust({ type: 'vibrance', vibrance: v })} />
         </Section>
 
         <Section id="levels" title="Levels" open={open === 'levels'} onToggle={toggle}>
           <Slider label="Input black" value={levels.inBlack} min={0} max={253} step={1}
-            onChange={(v) => {
-              const next = { ...levels, inBlack: Math.min(v, levels.inWhite - 2) }; setLevels(next)
-              schedule({ type: 'levels', ...next })
-            }} />
+            onChange={(v) => { const n = { ...levelsRef.current, inBlack: Math.min(v, levelsRef.current.inWhite - 2) }; levelsRef.current = n; setLevels(n) }}
+            onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
           <Slider label="Input white" value={levels.inWhite} min={2} max={255} step={1}
-            onChange={(v) => {
-              const next = { ...levels, inWhite: Math.max(v, levels.inBlack + 2) }; setLevels(next)
-              schedule({ type: 'levels', ...next })
-            }} />
+            onChange={(v) => { const n = { ...levelsRef.current, inWhite: Math.max(v, levelsRef.current.inBlack + 2) }; levelsRef.current = n; setLevels(n) }}
+            onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
           <Slider label="Gamma" value={levels.gamma} min={0.1} max={10} step={0.05}
-            onChange={(v) => {
-              const next = { ...levels, gamma: v }; setLevels(next)
-              schedule({ type: 'levels', ...next })
-            }} />
+            onChange={(v) => { const n = { ...levelsRef.current, gamma: v }; levelsRef.current = n; setLevels(n) }}
+            onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
           <Slider label="Output black" value={levels.outBlack} min={0} max={255} step={1}
-            onChange={(v) => {
-              const next = { ...levels, outBlack: Math.min(v, levels.outWhite - 1) }; setLevels(next)
-              schedule({ type: 'levels', ...next })
-            }} />
+            onChange={(v) => { const n = { ...levelsRef.current, outBlack: Math.min(v, levelsRef.current.outWhite - 1) }; levelsRef.current = n; setLevels(n) }}
+            onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
           <Slider label="Output white" value={levels.outWhite} min={0} max={255} step={1}
-            onChange={(v) => {
-              const next = { ...levels, outWhite: Math.max(v, levels.outBlack + 1) }; setLevels(next)
-              schedule({ type: 'levels', ...next })
-            }} />
+            onChange={(v) => { const n = { ...levelsRef.current, outWhite: Math.max(v, levelsRef.current.outBlack + 1) }; levelsRef.current = n; setLevels(n) }}
+            onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
         </Section>
 
         <Section id="curves" title="Curves" open={open === 'curves'} onToggle={toggle}>
-          <CurvesEditor userPoints={curvePoints} onChange={(pts) => {
-            setCurvePoints(pts)
-            schedule({ type: 'curves', points: pts })
-          }} />
+          <CurvesEditor
+            userPoints={curvePoints}
+            onChange={setCurvePoints}
+            onCommit={(pts) => commitToRust({ type: 'curves', points: pts })}
+          />
         </Section>
 
         <Section id="wb" title="White Balance" open={open === 'wb'} onToggle={toggle}>
           <Slider label="Temperature" value={wb.temperature} min={-100} max={100} step={1}
-            onChange={(v) => {
-              const next = { ...wb, temperature: v }; setWb(next)
-              schedule({ type: 'white-balance', temperature: next.temperature, tint: next.tint })
-            }} />
+            onChange={(v) => { const n = { ...wbRef.current, temperature: v }; wbRef.current = n; setWb(n) }}
+            onCommit={() => commitToRust({ type: 'white-balance', ...wbRef.current })} />
           <Slider label="Tint" value={wb.tint} min={-100} max={100} step={1}
-            onChange={(v) => {
-              const next = { ...wb, tint: v }; setWb(next)
-              schedule({ type: 'white-balance', temperature: next.temperature, tint: next.tint })
-            }} />
+            onChange={(v) => { const n = { ...wbRef.current, tint: v }; wbRef.current = n; setWb(n) }}
+            onCommit={() => commitToRust({ type: 'white-balance', ...wbRef.current })} />
         </Section>
 
         <Section id="sharpen" title="Sharpen" open={open === 'sharpen'} onToggle={toggle}>
           <Slider label="Amount" value={sharpen.amount} min={0} max={200} step={1}
-            onChange={(v) => {
-              const next = { ...sharpen, amount: v }; setSharpen(next)
-              schedule({ type: 'sharpen', amount: next.amount, radius: next.radius, threshold: next.threshold })
-            }} />
+            onChange={(v) => { const n = { ...sharpenRef.current, amount: v }; sharpenRef.current = n; setSharpen(n) }}
+            onCommit={() => commitToRust({ type: 'sharpen', ...sharpenRef.current })} />
           <Slider label="Radius" value={sharpen.radius} min={0.1} max={5} step={0.1}
-            onChange={(v) => {
-              const next = { ...sharpen, radius: v }; setSharpen(next)
-              schedule({ type: 'sharpen', amount: next.amount, radius: next.radius, threshold: next.threshold })
-            }} />
+            onChange={(v) => { const n = { ...sharpenRef.current, radius: v }; sharpenRef.current = n; setSharpen(n) }}
+            onCommit={() => commitToRust({ type: 'sharpen', ...sharpenRef.current })} />
           <Slider label="Threshold" value={sharpen.threshold} min={0} max={255} step={1}
-            onChange={(v) => {
-              const next = { ...sharpen, threshold: v }; setSharpen(next)
-              schedule({ type: 'sharpen', amount: next.amount, radius: next.radius, threshold: next.threshold })
-            }} />
+            onChange={(v) => { const n = { ...sharpenRef.current, threshold: v }; sharpenRef.current = n; setSharpen(n) }}
+            onCommit={() => commitToRust({ type: 'sharpen', ...sharpenRef.current })} />
         </Section>
 
         <Section id="denoise" title="Denoise" open={open === 'denoise'} onToggle={toggle}>
           <Slider label="Strength" value={denoise} min={0} max={100} step={1}
             onChange={(v) => {
               setDenoise(v)
-              schedule({ type: 'denoise', strength: v }, v === 0 ? null : `blur(${(v / 100).toFixed(2)}px)`)
-            }} />
+              onPreviewFilterChange(v === 0 ? null : `blur(${(v / 100).toFixed(2)}px)`)
+            }}
+            onCommit={(v) => commitToRust({ type: 'denoise', strength: v })} />
         </Section>
 
       </div>
