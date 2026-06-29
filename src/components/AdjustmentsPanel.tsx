@@ -184,9 +184,10 @@ function CurvesEditor({
 // ─── Slider ──────────────────────────────────────────────────────────────────
 
 function Slider({
-  label, value, min, max, step, unit, onChange, onCommit,
+  label, value, min, max, step, unit, disabled, onChange, onCommit,
 }: {
   label: string; value: number; min: number; max: number; step: number; unit?: string
+  disabled?: boolean
   onChange: (v: number) => void
   onCommit: (v: number) => void
 }) {
@@ -195,17 +196,19 @@ function Slider({
     parseFloat((e.target as HTMLInputElement).value)
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className={`flex flex-col gap-1 ${disabled ? 'opacity-40' : ''}`}>
       <div className="flex items-center justify-between text-xs text-slate-400">
         <span>{label}</span>
         <span className="font-mono text-slate-300 tabular-nums">{value.toFixed(decimals)}{unit ?? ''}</span>
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
+        disabled={disabled}
         onChange={(e) => onChange(readValue(e))}
-        onPointerUp={(e) => onCommit(readValue(e))}
-        onKeyUp={(e) => onCommit(readValue(e))}
-        className="w-full accent-indigo-500" style={{ height: '4px' }}
+        onPointerUp={(e) => { if (!disabled) onCommit(readValue(e)) }}
+        onKeyUp={(e) => { if (!disabled) onCommit(readValue(e)) }}
+        className={`w-full accent-indigo-500 ${disabled ? 'cursor-not-allowed' : ''}`}
+        style={{ height: '4px' }}
       />
     </div>
   )
@@ -297,12 +300,23 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
 
   return (
     <aside className="w-72 bg-slate-900 border-l border-slate-700 flex flex-col overflow-hidden shrink-0">
-      <div className="px-4 py-2.5 border-b border-slate-700 shrink-0">
-        <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Adjustments</span>
-        {isLoading && <span className="ml-2 text-xs text-indigo-400">…</span>}
+      <div className="border-b border-slate-700 shrink-0">
+        <div className="px-4 py-2.5 flex items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Adjustments</span>
+          {isLoading && (
+            <svg className="animate-spin h-3 w-3 text-indigo-400 ml-auto" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          )}
+        </div>
+        {isLoading && <div className="h-0.5 bg-indigo-600 animate-pulse" />}
       </div>
 
-      <div className="overflow-y-auto flex-1">
+      <div className="overflow-y-auto flex-1 relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 bg-slate-900/60 cursor-wait" />
+        )}
 
         <Section id="bc" title="Brightness / Contrast" open={open === 'bc'} onToggle={toggle}>
           <Slider label="Brightness" value={bc.brightness} min={-100} max={100} step={1}

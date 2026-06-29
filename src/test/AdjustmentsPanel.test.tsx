@@ -112,9 +112,10 @@ describe('AdjustmentsPanel', () => {
     }))
   })
 
-  it('shows loading indicator when isLoading', () => {
+  it('shows loading overlay when isLoading', () => {
     renderPanel({ isLoading: true })
-    expect(screen.getByText('…')).toBeInTheDocument()
+    // Loading pulse bar is rendered under the header
+    expect(document.querySelector('.animate-pulse')).toBeTruthy()
   })
 
   it('second commit while first is in flight is queued, not dropped', async () => {
