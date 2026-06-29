@@ -217,14 +217,14 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
         {/* Preset grid */}
         <div
           className="grid grid-cols-3 gap-1.5 p-2"
-          onMouseLeave={() => onPreviewFilterChange(null)}
+          onMouseLeave={() => { if (!inFlightRef.current) onPreviewFilterChange(null) }}
         >
           {PRESETS.map((preset) => (
             <button
               key={preset.id}
               className="flex flex-col items-center gap-1 p-1 rounded hover:bg-slate-700/50 transition-colors group"
               onMouseEnter={() => onPreviewFilterChange(preset.css)}
-              onClick={() => commitToRust(preset.cmd)}
+              onClick={() => { onPreviewFilterChange(preset.css); commitToRust(preset.cmd) }}
               title={preset.name}
             >
               <div className="w-full aspect-video overflow-hidden rounded-sm bg-slate-800">

@@ -399,6 +399,25 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     [withLoading, activeTabId, updateTab],
   )
 
+  // Same as applyAdjustment but without the global isLoading flag — the FiltersPanel
+  // manages its own blocking overlay, so we avoid disabling the entire toolbar.
+  const applyFilter = useCallback(
+    async (label: string, fn: (id: string) => Promise<ImageMeta>) => {
+      if (!activeTabId) return
+      const id = activeTabId
+      try {
+        const result = await fn(id)
+        updateTab(id, (tab) => {
+          const [nextHistory, nextIndex] = pushHistory(tab.history, tab.historyIndex, label)
+          return { ...tab, image: result, history: nextHistory, historyIndex: nextIndex }
+        })
+      } catch (err) {
+        setError(String(err))
+      }
+    },
+    [activeTabId, updateTab],
+  )
+
   const handleAdjustBrightnessContrast = useCallback(
     (brightness: number, contrast: number) =>
       applyAdjustment('Brightness/Contrast', (id) => adjustBrightnessContrast(id, brightness, contrast)),
@@ -443,71 +462,71 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
 
   const handleFilterGrayscale = useCallback(
     (rWeight: number, gWeight: number, bWeight: number) =>
-      applyAdjustment('Grayscale', (id) => filterGrayscale(id, rWeight, gWeight, bWeight)),
-    [applyAdjustment],
+      applyFilter('Grayscale', (id) => filterGrayscale(id, rWeight, gWeight, bWeight)),
+    [applyFilter],
   )
   const handleFilterSepia = useCallback(
-    (intensity: number) => applyAdjustment('Sépia', (id) => filterSepia(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Sépia', (id) => filterSepia(id, intensity)),
+    [applyFilter],
   )
   const handleFilterInvert = useCallback(
-    () => applyAdjustment('Négatif', (id) => filterInvert(id)),
-    [applyAdjustment],
+    () => applyFilter('Négatif', (id) => filterInvert(id)),
+    [applyFilter],
   )
   const handleFilterVignette = useCallback(
     (strength: number, feather: number) =>
-      applyAdjustment('Vignette', (id) => filterVignette(id, strength, feather)),
-    [applyAdjustment],
+      applyFilter('Vignette', (id) => filterVignette(id, strength, feather)),
+    [applyFilter],
   )
   const handleFilterGrain = useCallback(
     (amount: number, monochrome: boolean) =>
-      applyAdjustment('Grain', (id) => filterGrain(id, amount, monochrome)),
-    [applyAdjustment],
+      applyFilter('Grain', (id) => filterGrain(id, amount, monochrome)),
+    [applyFilter],
   )
   const handleFilterPixelate = useCallback(
-    (size: number) => applyAdjustment('Pixelise', (id) => filterPixelate(id, size)),
-    [applyAdjustment],
+    (size: number) => applyFilter('Pixelise', (id) => filterPixelate(id, size)),
+    [applyFilter],
   )
   const handleFilterPosterize = useCallback(
-    (levels: number) => applyAdjustment('Postérisé', (id) => filterPosterize(id, levels)),
-    [applyAdjustment],
+    (levels: number) => applyFilter('Postérisé', (id) => filterPosterize(id, levels)),
+    [applyFilter],
   )
   const handleFilterDuotone = useCallback(
     (shadowR: number, shadowG: number, shadowB: number, highlightR: number, highlightG: number, highlightB: number) =>
-      applyAdjustment('Duotone', (id) => filterDuotone(id, shadowR, shadowG, shadowB, highlightR, highlightG, highlightB)),
-    [applyAdjustment],
+      applyFilter('Duotone', (id) => filterDuotone(id, shadowR, shadowG, shadowB, highlightR, highlightG, highlightB)),
+    [applyFilter],
   )
   const handleFilterSketch = useCallback(
-    () => applyAdjustment('Sketch', (id) => filterSketch(id)),
-    [applyAdjustment],
+    () => applyFilter('Sketch', (id) => filterSketch(id)),
+    [applyFilter],
   )
   const handleFilterLomo = useCallback(
-    (intensity: number) => applyAdjustment('Lomo', (id) => filterLomo(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Lomo', (id) => filterLomo(id, intensity)),
+    [applyFilter],
   )
   const handleFilterVintage = useCallback(
-    (intensity: number) => applyAdjustment('Vintage', (id) => filterVintage(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Vintage', (id) => filterVintage(id, intensity)),
+    [applyFilter],
   )
   const handleFilterCool = useCallback(
-    (intensity: number) => applyAdjustment('Cool', (id) => filterCool(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Cool', (id) => filterCool(id, intensity)),
+    [applyFilter],
   )
   const handleFilterWarm = useCallback(
-    (intensity: number) => applyAdjustment('Warm', (id) => filterWarm(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Warm', (id) => filterWarm(id, intensity)),
+    [applyFilter],
   )
   const handleFilterFade = useCallback(
-    (intensity: number) => applyAdjustment('Fade', (id) => filterFade(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Fade', (id) => filterFade(id, intensity)),
+    [applyFilter],
   )
   const handleFilterDrama = useCallback(
-    (intensity: number) => applyAdjustment('Drama', (id) => filterDrama(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Drama', (id) => filterDrama(id, intensity)),
+    [applyFilter],
   )
   const handleFilterCrossProcess = useCallback(
-    (intensity: number) => applyAdjustment('Cross-process', (id) => filterCrossProcess(id, intensity)),
-    [applyAdjustment],
+    (intensity: number) => applyFilter('Cross-process', (id) => filterCrossProcess(id, intensity)),
+    [applyFilter],
   )
 
   const enterCropMode = useCallback(() => setMode('cropping'), [])
