@@ -14,7 +14,7 @@ const mockImage = {
 
 const defaultProps = {
   tabId: 'tab-1',
-  image: mockImage,
+  image: mockImage as typeof mockImage | null,
   isLoading: false,
   onApply: vi.fn().mockResolvedValue(undefined),
   onPreviewFilterChange: vi.fn(),
