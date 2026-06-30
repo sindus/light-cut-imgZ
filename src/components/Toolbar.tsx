@@ -30,12 +30,13 @@ interface BtnProps {
   active?: boolean
   primary?: boolean
   title: string
+  label: string
   'aria-label'?: string
   'aria-pressed'?: boolean
   children: React.ReactNode
 }
 
-function SidebarBtn({ onClick, disabled, active, primary, title, children, ...aria }: BtnProps) {
+function SidebarBtn({ onClick, disabled, active, primary, title, label, children, ...aria }: BtnProps) {
   return (
     <button
       onClick={onClick}
@@ -44,7 +45,7 @@ function SidebarBtn({ onClick, disabled, active, primary, title, children, ...ar
       aria-label={aria['aria-label'] ?? title}
       aria-pressed={aria['aria-pressed']}
       className={[
-        'w-10 h-10 rounded flex items-center justify-center transition-colors',
+        'w-full flex flex-col items-center gap-1 py-2 px-1 rounded transition-colors',
         disabled
           ? 'opacity-30 cursor-not-allowed'
           : primary
@@ -55,12 +56,13 @@ function SidebarBtn({ onClick, disabled, active, primary, title, children, ...ar
       ].join(' ')}
     >
       {children}
+      <span className="text-[9px] leading-none tracking-wide">{label}</span>
     </button>
   )
 }
 
 function Sep() {
-  return <div className="w-6 h-px bg-slate-700 my-1" />
+  return <div className="w-10 h-px bg-slate-700 my-1" />
 }
 
 export function Toolbar({
@@ -89,48 +91,48 @@ export function Toolbar({
   const disabled = !hasImage || isLoading
 
   return (
-    <aside className="w-14 bg-slate-900 border-r border-slate-700 flex flex-col items-center py-2 gap-0.5 select-none shrink-0">
+    <aside className="w-[72px] bg-slate-900 border-r border-slate-700 flex flex-col items-center py-2 gap-0.5 select-none shrink-0 px-1.5">
       {/* Branding */}
       <span className="text-xs font-bold text-indigo-400 mb-2 mt-1 tracking-tight">Z</span>
 
       {/* Transform tools */}
-      <SidebarBtn onClick={onCropMode} disabled={disabled} active={mode === 'cropping'} title="Crop" aria-pressed={mode === 'cropping'}>
+      <SidebarBtn onClick={onCropMode} disabled={disabled} active={mode === 'cropping'} title="Crop" label="Crop" aria-pressed={mode === 'cropping'}>
         <CropIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onRotateMode} disabled={disabled} active={mode === 'rotating'} title="Rotate" aria-pressed={mode === 'rotating'}>
+      <SidebarBtn onClick={onRotateMode} disabled={disabled} active={mode === 'rotating'} title="Rotate" label="Rotation" aria-pressed={mode === 'rotating'}>
         <RotateIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onFlipOpen} disabled={disabled} active={showFlipBar} title="Flip" aria-label="Flip" aria-pressed={showFlipBar}>
+      <SidebarBtn onClick={onFlipOpen} disabled={disabled} active={showFlipBar} title="Flip" label="Flip" aria-label="Flip" aria-pressed={showFlipBar}>
         <FlipIcon />
       </SidebarBtn>
 
       <Sep />
 
-      <SidebarBtn onClick={onResizeOpen} disabled={disabled} title="Resize image" aria-label="Resize">
+      <SidebarBtn onClick={onResizeOpen} disabled={disabled} title="Resize image" label="Resize" aria-label="Resize">
         <ResizeIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onCanvasResizeOpen} disabled={disabled} title="Canvas resize" aria-label="Canvas resize">
+      <SidebarBtn onClick={onCanvasResizeOpen} disabled={disabled} title="Canvas resize" label="Canvas" aria-label="Canvas resize">
         <CanvasResizeIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onEyedropperMode} disabled={disabled} active={mode === 'eyedropper'} title="Color picker" aria-label="Color picker" aria-pressed={mode === 'eyedropper'}>
+      <SidebarBtn onClick={onEyedropperMode} disabled={disabled} active={mode === 'eyedropper'} title="Color picker" label="Pipette" aria-label="Color picker" aria-pressed={mode === 'eyedropper'}>
         <EyedropperIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onAdjustmentsOpen} disabled={disabled} active={showAdjustments} title="Adjustments" aria-label="Adjustments" aria-pressed={showAdjustments}>
+      <SidebarBtn onClick={onAdjustmentsOpen} disabled={disabled} active={showAdjustments} title="Adjustments" label="Réglages" aria-label="Adjustments" aria-pressed={showAdjustments}>
         <AdjustmentsIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onFiltersOpen} disabled={disabled} active={showFilters} title="Filtres" aria-label="Filtres" aria-pressed={showFilters}>
+      <SidebarBtn onClick={onFiltersOpen} disabled={disabled} active={showFilters} title="Filtres" label="Filtres" aria-label="Filtres" aria-pressed={showFilters}>
         <FiltersIcon />
       </SidebarBtn>
 
       <Sep />
 
-      <SidebarBtn onClick={onCopy} disabled={disabled} title="Copy to clipboard" aria-label="Copy to clipboard">
+      <SidebarBtn onClick={onCopy} disabled={disabled} title="Copy to clipboard" label="Copier" aria-label="Copy to clipboard">
         <CopyIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onToggleGrid} disabled={!hasImage} active={showGrid} title="Toggle grid" aria-label="Toggle grid" aria-pressed={showGrid}>
+      <SidebarBtn onClick={onToggleGrid} disabled={!hasImage} active={showGrid} title="Toggle grid" label="Grille" aria-label="Toggle grid" aria-pressed={showGrid}>
         <GridIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onToggleExif} disabled={!hasImage} active={showExif} title="EXIF metadata" aria-label="EXIF metadata" aria-pressed={showExif}>
+      <SidebarBtn onClick={onToggleExif} disabled={!hasImage} active={showExif} title="EXIF metadata" label="EXIF" aria-label="EXIF metadata" aria-pressed={showExif}>
         <InfoIcon />
       </SidebarBtn>
 
@@ -138,11 +140,11 @@ export function Toolbar({
 
       <Sep />
 
-      <SidebarBtn onClick={onPrefsOpen} title="Preferences" aria-label="Preferences">
+      <SidebarBtn onClick={onPrefsOpen} title="Preferences" label="Préfs" aria-label="Preferences">
         <GearIcon />
       </SidebarBtn>
 
-      <SidebarBtn onClick={onExportOpen} disabled={disabled} primary title="Export" aria-label="Export">
+      <SidebarBtn onClick={onExportOpen} disabled={disabled} primary title="Export" label="Export" aria-label="Export">
         <ExportIcon />
       </SidebarBtn>
     </aside>
