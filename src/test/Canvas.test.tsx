@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { Canvas } from '../components/Canvas'
 import type { ImageMeta } from '../types'
@@ -54,5 +54,25 @@ describe('Canvas', () => {
   it('shows CropOverlay when mode is cropping', () => {
     renderCanvas({ image: mockImage, mode: 'cropping' })
     expect(screen.getByLabelText(/crop selection/i)).toBeInTheDocument()
+  })
+
+  it('shows recent files in empty state', () => {
+    renderCanvas({ recentFiles: ['/home/user/photo.jpg', '/home/user/other.png'] })
+    expect(screen.getByText('photo.jpg')).toBeInTheDocument()
+    expect(screen.getByText('other.png')).toBeInTheDocument()
+  })
+
+  it('clicking a recent file calls onOpenByPaths and shows spinner', () => {
+    const onOpenByPaths = vi.fn()
+    renderCanvas({ recentFiles: ['/home/user/photo.jpg'], onOpenByPaths, isLoading: false })
+    const btn = screen.getByTitle('/home/user/photo.jpg')
+    fireEvent.click(btn)
+    expect(onOpenByPaths).toHaveBeenCalledWith(['/home/user/photo.jpg'])
+    expect(btn.querySelector('.animate-spin')).toBeTruthy()
+  })
+
+  it('recent file buttons are disabled while isLoading', () => {
+    renderCanvas({ recentFiles: ['/home/user/photo.jpg'], isLoading: true })
+    expect(screen.getByTitle('/home/user/photo.jpg')).toBeDisabled()
   })
 })

@@ -105,7 +105,7 @@ export default function App() {
   const [exifFields, setExifFields] = useState<ExifField[]>([])
   const [exifLoading, setExifLoading] = useState(false)
   const [showGrid, setShowGrid] = useState(false)
-  const [showHistory, setShowHistory] = useState(true)
+  const [showHistory, setShowHistory] = useState(false)
   const [showFlipBar, setShowFlipBar] = useState(false)
   const [cropRect, setCropRect] = useState<CropRect>({ x: 0, y: 0, width: 0, height: 0 })
   const [prefsOpen, setPrefsOpen] = useState(false)
@@ -365,6 +365,7 @@ export default function App() {
             showGrid={showGrid}
             gridSize={prefs.gridSize}
             recentFiles={recentFiles}
+            isLoading={isLoading}
             onCropApply={handleCropApply}
             onCropCancel={exitCropMode}
             onCropRectChange={setCropRect}

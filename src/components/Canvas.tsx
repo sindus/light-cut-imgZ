@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CropOverlay } from './CropOverlay'
 import type { CropRect, EditorMode, ImageMeta } from '../types'
 
@@ -16,6 +16,7 @@ interface CanvasProps {
   showGrid?: boolean
   gridSize?: number
   recentFiles?: string[]
+  isLoading?: boolean
   onCropApply: (rect: CropRect) => void
   onCropCancel: () => void
   onCropRectChange?: (rect: CropRect) => void
@@ -41,6 +42,7 @@ export function Canvas({
   showGrid = false,
   gridSize = 50,
   recentFiles = [],
+  isLoading = false,
   onCropApply,
   onCropCancel,
   onCropRectChange,
@@ -51,9 +53,14 @@ export function Canvas({
   onColorPickConfirm,
   onImageRef,
 }: CanvasProps) {
+  const [loadingPath, setLoadingPath] = useState<string | null>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const magnifierRef = useRef<HTMLCanvasElement | null>(null)
   const lastPickedRef = useRef<PickedColor | null>(null)
+
+  useEffect(() => {
+    if (!isLoading) setLoadingPath(null)
+  }, [isLoading])
   const onImageRefStable = useRef(onImageRef)
   onImageRefStable.current = onImageRef
   const imgCallbackRef = useCallback((el: HTMLImageElement | null) => {
@@ -237,17 +244,29 @@ export function Canvas({
           <div className="mt-2 w-72">
             <p className="text-xs text-slate-600 mb-2 text-center uppercase tracking-wider">Recent</p>
             <div className="flex flex-col gap-0.5">
-              {recentFiles.map((path) => (
-                <button
-                  key={path}
-                  onClick={() => onOpenByPaths?.([path])}
-                  className="text-left text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800 px-3 py-1.5 rounded transition-colors truncate"
-                  title={path}
-                >
-                  {path.split('/').pop()}
-                  <span className="text-slate-700 ml-2 text-xs">{path.replace(/\/[^/]+$/, '')}</span>
-                </button>
-              ))}
+              {recentFiles.map((path) => {
+                const loading = loadingPath === path
+                return (
+                  <button
+                    key={path}
+                    onClick={() => { setLoadingPath(path); onOpenByPaths?.([path]) }}
+                    disabled={isLoading}
+                    className="text-left text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800 px-3 py-1.5 rounded transition-colors truncate flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+                    title={path}
+                  >
+                    {loading ? (
+                      <svg className="animate-spin w-3 h-3 shrink-0 text-indigo-400" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                    ) : null}
+                    <span className="truncate">
+                      {path.split('/').pop()}
+                      <span className="text-slate-700 ml-2">{path.replace(/\/[^/]+$/, '')}</span>
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
