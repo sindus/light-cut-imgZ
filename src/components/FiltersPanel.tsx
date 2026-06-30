@@ -164,6 +164,38 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
   const [posterLevels, setPosterLevels] = useState(4)
   const posterRef = useRef(4)
 
+  // Sepia state
+  const [sepiaIntensity, setSepiaIntensity] = useState(1.0)
+  const sepiaRef = useRef(1.0)
+
+  // Lomo state
+  const [lomoIntensity, setLomoIntensity] = useState(1.0)
+  const lomoRef = useRef(1.0)
+
+  // Vintage state
+  const [vintageIntensity, setVintageIntensity] = useState(1.0)
+  const vintageRef = useRef(1.0)
+
+  // Cool state
+  const [coolIntensity, setCoolIntensity] = useState(1.0)
+  const coolRef = useRef(1.0)
+
+  // Warm state
+  const [warmIntensity, setWarmIntensity] = useState(1.0)
+  const warmRef = useRef(1.0)
+
+  // Fade state
+  const [fadeIntensity, setFadeIntensity] = useState(1.0)
+  const fadeRef = useRef(1.0)
+
+  // Drama state
+  const [dramaIntensity, setDramaIntensity] = useState(1.0)
+  const dramaRef = useRef(1.0)
+
+  // Cross-process state
+  const [crossIntensity, setCrossIntensity] = useState(1.0)
+  const crossRef = useRef(1.0)
+
   // Blur state
   const [blurType, setBlurType] = useState<'gaussian' | 'motion' | 'radial'>('gaussian')
   const [blurRadius, setBlurRadius] = useState(3)
@@ -389,6 +421,67 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
               />
             </>
           )}
+        </Section>
+
+        <Section title="Sépia" open={openSection === 'sepia'} onToggle={() => toggleSection('sepia')}>
+          <Slider
+            label="Intensité" value={sepiaIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setSepiaIntensity(v); sepiaRef.current = v; onPreviewFilterChange(`sepia(${v.toFixed(2)})`) }}
+            onCommit={() => commitToRust({ type: 'sepia', intensity: sepiaRef.current })}
+          />
+        </Section>
+
+        <Section title="Lomo" open={openSection === 'lomo'} onToggle={() => toggleSection('lomo')}>
+          <Slider
+            label="Intensité" value={lomoIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setLomoIntensity(v); lomoRef.current = v; onPreviewFilterChange(`saturate(${1 + v * 0.6}) contrast(${1 + v * 0.2}) brightness(${1 - v * 0.12})`) }}
+            onCommit={() => commitToRust({ type: 'lomo', intensity: lomoRef.current })}
+          />
+        </Section>
+
+        <Section title="Vintage" open={openSection === 'vintage'} onToggle={() => toggleSection('vintage')}>
+          <Slider
+            label="Intensité" value={vintageIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setVintageIntensity(v); vintageRef.current = v; onPreviewFilterChange(`sepia(${v * 0.4}) contrast(${1 - v * 0.1}) brightness(${1 + v * 0.05})`) }}
+            onCommit={() => commitToRust({ type: 'vintage', intensity: vintageRef.current })}
+          />
+        </Section>
+
+        <Section title="Cool / Warm" open={openSection === 'coolwarm'} onToggle={() => toggleSection('coolwarm')}>
+          <Slider
+            label="Cool" value={coolIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setCoolIntensity(v); coolRef.current = v; onPreviewFilterChange(`hue-rotate(${v * 20}deg) saturate(${1 + v * 0.15}) brightness(${1 + v * 0.05})`) }}
+            onCommit={() => commitToRust({ type: 'cool', intensity: coolRef.current })}
+          />
+          <Slider
+            label="Warm" value={warmIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setWarmIntensity(v); warmRef.current = v; onPreviewFilterChange(`hue-rotate(${-v * 15}deg) saturate(${1 + v * 0.2}) brightness(${1 + v * 0.05})`) }}
+            onCommit={() => commitToRust({ type: 'warm', intensity: warmRef.current })}
+          />
+        </Section>
+
+        <Section title="Fondu" open={openSection === 'fade'} onToggle={() => toggleSection('fade')}>
+          <Slider
+            label="Intensité" value={fadeIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setFadeIntensity(v); fadeRef.current = v; onPreviewFilterChange(`contrast(${1 - v * 0.3}) brightness(${1 + v * 0.2}) saturate(${1 - v * 0.2})`) }}
+            onCommit={() => commitToRust({ type: 'fade', intensity: fadeRef.current })}
+          />
+        </Section>
+
+        <Section title="Drama" open={openSection === 'drama'} onToggle={() => toggleSection('drama')}>
+          <Slider
+            label="Intensité" value={dramaIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setDramaIntensity(v); dramaRef.current = v; onPreviewFilterChange(`contrast(${1 + v * 0.5}) brightness(${1 - v * 0.15}) saturate(${1 - v * 0.3})`) }}
+            onCommit={() => commitToRust({ type: 'drama', intensity: dramaRef.current })}
+          />
+        </Section>
+
+        <Section title="Cross-process" open={openSection === 'cross'} onToggle={() => toggleSection('cross')}>
+          <Slider
+            label="Intensité" value={crossIntensity} min={0} max={1} step={0.01}
+            onChange={(v) => { setCrossIntensity(v); crossRef.current = v; onPreviewFilterChange(`saturate(${1 + v * 0.5}) hue-rotate(${v * 15}deg) contrast(${1 + v * 0.1})`) }}
+            onCommit={() => commitToRust({ type: 'cross-process', intensity: crossRef.current })}
+          />
         </Section>
 
         <Section title="Duotone" open={openSection === 'duotone'} onToggle={() => toggleSection('duotone')}>

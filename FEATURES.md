@@ -45,6 +45,7 @@ Légende : ✅ implémenté · 🎯 à faire · ⬜ hors scope actuel
 | ✅ | Inversion des couleurs (négatif) |
 | ✅ | Sketch (crayon) |
 | ✅ | Lomo / Vintage / Cool / Warm / Fade / Drama / Cross-process |
+| ✅ | Curseurs d'intensité paramétriques pour Sépia, Lomo, Vintage, Cool, Warm, Fondu, Drama, Cross-process |
 
 ## Retouche et dessin
 
