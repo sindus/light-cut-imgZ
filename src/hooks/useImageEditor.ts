@@ -41,6 +41,7 @@ import {
   redoImage,
   resizeImage,
   rotateImage,
+  resetToOriginal,
   stripExif,
   undoImage,
 } from '../lib/tauri'
@@ -93,6 +94,7 @@ interface ImageEditorActions {
   handleExport: (format: ExportFormat, quality?: number) => Promise<void>
   handleUndo: () => Promise<void>
   handleRedo: () => Promise<void>
+  handleResetToOriginal: () => Promise<void>
   handleCloseTab: (id: string) => Promise<void>
   handleCloseOtherTabs: () => Promise<void>
   handleCloseAllTabs: () => Promise<void>
@@ -328,6 +330,16 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
       setMode('idle')
     })
   }, [withLoading, activeTabId, historyIndex, history.length, updateTab])
+
+  const handleResetToOriginal = useCallback(async () => {
+    if (!activeTabId || historyIndex === 0) return
+    const id = activeTabId
+    await withLoading(async () => {
+      const result = await resetToOriginal(id)
+      updateTab(id, (tab) => ({ ...tab, image: result, historyIndex: 0 }))
+      setMode('idle')
+    })
+  }, [withLoading, activeTabId, historyIndex, updateTab])
 
   const handleCloseTab = useCallback(
     async (id: string) => {
@@ -582,6 +594,7 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     handleExport,
     handleUndo,
     handleRedo,
+    handleResetToOriginal,
     handleCloseTab,
     handleCloseOtherTabs,
     handleCloseAllTabs,
