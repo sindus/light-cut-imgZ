@@ -35,10 +35,15 @@ describe('CropOverlay', () => {
         onApply={vi.fn()}
         onCancel={vi.fn()}
         onCropRectChange={onCropRectChange}
-      />
+      />,
     )
     expect(onCropRectChange).toHaveBeenCalledWith(
-      expect.objectContaining({ x: expect.any(Number), y: expect.any(Number), width: expect.any(Number), height: expect.any(Number) })
+      expect.objectContaining({
+        x: expect.any(Number),
+        y: expect.any(Number),
+        width: expect.any(Number),
+        height: expect.any(Number),
+      }),
     )
   })
 

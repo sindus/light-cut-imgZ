@@ -7,19 +7,31 @@ interface Props {
   originalWidth: number
   originalHeight: number
   isLoading: boolean
-  onResize: (width: number, height: number, anchor: Anchor, fill: [number, number, number, number]) => void
+  onResize: (
+    width: number,
+    height: number,
+    anchor: Anchor,
+    fill: [number, number, number, number],
+  ) => void
   onClose: () => void
 }
 
 const ANCHORS: Anchor[][] = [
-  ['top-left',    'top-center',    'top-right'],
-  ['middle-left', 'center',        'middle-right'],
+  ['top-left', 'top-center', 'top-right'],
+  ['middle-left', 'center', 'middle-right'],
   ['bottom-left', 'bottom-center', 'bottom-right'],
 ]
 
 function LockIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
@@ -28,7 +40,14 @@ function LockIcon() {
 
 function UnlockIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 9.9-1" />
     </svg>
@@ -48,11 +67,11 @@ export function CanvasResizeDialog({
   onResize,
   onClose,
 }: Props) {
-  const [width, setWidth]   = useState(originalWidth)
+  const [width, setWidth] = useState(originalWidth)
   const [height, setHeight] = useState(originalHeight)
   const [lockRatio, setLockRatio] = useState(false)
   const [anchor, setAnchor] = useState<Anchor>('center')
-  const [fillHex, setFillHex]   = useState('#ffffff')
+  const [fillHex, setFillHex] = useState('#ffffff')
   const [transparent, setTransparent] = useState(false)
 
   useEffect(() => {
@@ -96,11 +115,7 @@ export function CanvasResizeDialog({
 
   if (!open) return null
 
-  const valid =
-    width >= originalWidth &&
-    height >= originalHeight &&
-    width >= 1 &&
-    height >= 1
+  const valid = width >= originalWidth && height >= originalHeight && width >= 1 && height >= 1
 
   const handleConfirm = () => {
     if (!valid) return
@@ -179,13 +194,13 @@ export function CanvasResizeDialog({
                   onClick={() => setAnchor(a)}
                   title={a}
                   className={`w-7 h-7 rounded flex items-center justify-center transition-colors
-                    ${anchor === a
-                      ? 'bg-indigo-600'
-                      : 'bg-slate-700 hover:bg-slate-600'}`}
+                    ${anchor === a ? 'bg-indigo-600' : 'bg-slate-700 hover:bg-slate-600'}`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${anchor === a ? 'bg-white' : 'bg-slate-400'}`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${anchor === a ? 'bg-white' : 'bg-slate-400'}`}
+                  />
                 </button>
-              ))
+              )),
             )}
           </div>
           <span className="text-slate-400 text-xs">{anchor.replace('-', ' ')}</span>

@@ -19,7 +19,14 @@ const FORMATS: Array<{ value: ExportFormat; label: string; supportsQuality: bool
   { value: 'tiff', label: 'TIFF', supportsQuality: false },
 ]
 
-export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, onExport, onClose }: ExportDialogProps) {
+export function ExportDialog({
+  open,
+  isLoading,
+  defaultFormat,
+  defaultQuality,
+  onExport,
+  onClose,
+}: ExportDialogProps) {
   const t = useT()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [format, setFormat] = useState<ExportFormat>(defaultFormat ?? 'png')
@@ -53,7 +60,9 @@ export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, o
 
       <div className="px-5 py-4 flex flex-col gap-4">
         <fieldset>
-          <legend className="text-xs text-slate-400 uppercase tracking-wider mb-2">{t('exp.format')}</legend>
+          <legend className="text-xs text-slate-400 uppercase tracking-wider mb-2">
+            {t('exp.format')}
+          </legend>
           <div className="grid grid-cols-5 gap-1.5">
             {FORMATS.map((f) => (
               <label

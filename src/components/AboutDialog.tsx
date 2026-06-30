@@ -31,11 +31,7 @@ export function AboutDialog({ open, version, onClose }: Props) {
 
         <div className="text-slate-500 text-xs">{t('about.version', { v: version })}</div>
 
-        <button
-          onClick={onClose}
-          className="mt-2 toolbar-btn px-5 py-1.5 text-sm"
-          autoFocus
-        >
+        <button onClick={onClose} className="mt-2 toolbar-btn px-5 py-1.5 text-sm" autoFocus>
           {t('about.close')}
         </button>
       </div>

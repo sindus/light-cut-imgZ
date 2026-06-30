@@ -89,7 +89,12 @@ interface ImageEditorActions {
   handleCropApply: (rect: CropRect) => Promise<void>
   handleFlip: (direction: 'horizontal' | 'vertical') => Promise<void>
   handleResize: (width: number, height: number) => Promise<void>
-  handleCanvasResize: (width: number, height: number, anchor: Anchor, fill: [number, number, number, number]) => Promise<void>
+  handleCanvasResize: (
+    width: number,
+    height: number,
+    anchor: Anchor,
+    fill: [number, number, number, number],
+  ) => Promise<void>
   handleRotate: (degrees: number) => Promise<void>
   handleExport: (format: ExportFormat, quality?: number) => Promise<void>
   handleUndo: () => Promise<void>
@@ -109,7 +114,13 @@ interface ImageEditorActions {
   handleAdjustExposure: (exposure: number) => Promise<void>
   handleAdjustHueSaturation: (hue: number, saturation: number, lightness: number) => Promise<void>
   handleAdjustVibrance: (vibrance: number) => Promise<void>
-  handleAdjustLevels: (inBlack: number, inWhite: number, gamma: number, outBlack: number, outWhite: number) => Promise<void>
+  handleAdjustLevels: (
+    inBlack: number,
+    inWhite: number,
+    gamma: number,
+    outBlack: number,
+    outWhite: number,
+  ) => Promise<void>
   handleAdjustCurves: (points: [number, number][]) => Promise<void>
   handleAdjustWhiteBalance: (temperature: number, tint: number) => Promise<void>
   handleAdjustSharpen: (amount: number, radius: number, threshold: number) => Promise<void>
@@ -121,7 +132,14 @@ interface ImageEditorActions {
   handleFilterGrain: (amount: number, monochrome: boolean) => Promise<void>
   handleFilterPixelate: (size: number) => Promise<void>
   handleFilterPosterize: (levels: number) => Promise<void>
-  handleFilterDuotone: (shadowR: number, shadowG: number, shadowB: number, highlightR: number, highlightG: number, highlightB: number) => Promise<void>
+  handleFilterDuotone: (
+    shadowR: number,
+    shadowG: number,
+    shadowB: number,
+    highlightR: number,
+    highlightG: number,
+    highlightB: number,
+  ) => Promise<void>
   handleFilterSketch: () => Promise<void>
   handleFilterLomo: (intensity: number) => Promise<void>
   handleFilterVintage: (intensity: number) => Promise<void>
@@ -150,12 +168,9 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
   const canUndo = historyIndex > 0
   const canRedo = historyIndex < history.length - 1
 
-  const updateTab = useCallback(
-    (id: string, updater: (tab: Tab) => Tab) => {
-      setTabs((prev) => prev.map((t) => (t.id === id ? updater(t) : t)))
-    },
-    [],
-  )
+  const updateTab = useCallback((id: string, updater: (tab: Tab) => Tab) => {
+    setTabs((prev) => prev.map((t) => (t.id === id ? updater(t) : t)))
+  }, [])
 
   const withLoading = useCallback(async (fn: () => Promise<void>) => {
     setIsLoading(true)
@@ -191,12 +206,15 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     })
   }, [withLoading, createTabsFromOpened])
 
-  const handleOpenByPaths = useCallback(async (paths: string[]) => {
-    await withLoading(async () => {
-      const opened = await openImagesByPaths(paths)
-      createTabsFromOpened(opened)
-    })
-  }, [withLoading, createTabsFromOpened])
+  const handleOpenByPaths = useCallback(
+    async (paths: string[]) => {
+      await withLoading(async () => {
+        const opened = await openImagesByPaths(paths)
+        createTabsFromOpened(opened)
+      })
+    },
+    [withLoading, createTabsFromOpened],
+  )
 
   const handleCopyToClipboard = useCallback(async () => {
     if (!activeTabId) return
@@ -265,7 +283,12 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
   )
 
   const handleCanvasResize = useCallback(
-    async (width: number, height: number, anchor: Anchor, fill: [number, number, number, number]) => {
+    async (
+      width: number,
+      height: number,
+      anchor: Anchor,
+      fill: [number, number, number, number],
+    ) => {
       if (!activeTabId) return
       const id = activeTabId
       await withLoading(async () => {
@@ -396,11 +419,14 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     }
   }, [])
 
-  const handleStripExif = useCallback(async (tabId: string) => {
-    await withLoading(async () => {
-      await stripExif(tabId)
-    })
-  }, [withLoading])
+  const handleStripExif = useCallback(
+    async (tabId: string) => {
+      await withLoading(async () => {
+        await stripExif(tabId)
+      })
+    },
+    [withLoading],
+  )
 
   const applyAdjustment = useCallback(
     async (label: string, fn: (id: string) => ReturnType<typeof adjustBrightnessContrast>) => {
@@ -438,7 +464,9 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
 
   const handleAdjustBrightnessContrast = useCallback(
     (brightness: number, contrast: number) =>
-      applyAdjustment('Brightness/Contrast', (id) => adjustBrightnessContrast(id, brightness, contrast)),
+      applyAdjustment('Brightness/Contrast', (id) =>
+        adjustBrightnessContrast(id, brightness, contrast),
+      ),
     [applyAdjustment],
   )
   const handleAdjustExposure = useCallback(
@@ -447,7 +475,9 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
   )
   const handleAdjustHueSaturation = useCallback(
     (hue: number, saturation: number, lightness: number) =>
-      applyAdjustment('Hue/Saturation', (id) => adjustHueSaturation(id, hue, saturation, lightness)),
+      applyAdjustment('Hue/Saturation', (id) =>
+        adjustHueSaturation(id, hue, saturation, lightness),
+      ),
     [applyAdjustment],
   )
   const handleAdjustVibrance = useCallback(
@@ -456,7 +486,9 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
   )
   const handleAdjustLevels = useCallback(
     (inBlack: number, inWhite: number, gamma: number, outBlack: number, outWhite: number) =>
-      applyAdjustment('Levels', (id) => adjustLevels(id, inBlack, inWhite, gamma, outBlack, outWhite)),
+      applyAdjustment('Levels', (id) =>
+        adjustLevels(id, inBlack, inWhite, gamma, outBlack, outWhite),
+      ),
     [applyAdjustment],
   )
   const handleAdjustCurves = useCallback(
@@ -510,8 +542,17 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     [applyFilter],
   )
   const handleFilterDuotone = useCallback(
-    (shadowR: number, shadowG: number, shadowB: number, highlightR: number, highlightG: number, highlightB: number) =>
-      applyFilter('Duotone', (id) => filterDuotone(id, shadowR, shadowG, shadowB, highlightR, highlightG, highlightB)),
+    (
+      shadowR: number,
+      shadowG: number,
+      shadowB: number,
+      highlightR: number,
+      highlightG: number,
+      highlightB: number,
+    ) =>
+      applyFilter('Duotone', (id) =>
+        filterDuotone(id, shadowR, shadowG, shadowB, highlightR, highlightG, highlightB),
+      ),
     [applyFilter],
   )
   const handleFilterSketch = useCallback(
@@ -551,11 +592,13 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     [applyFilter],
   )
   const handleFilterBlurMotion = useCallback(
-    (angle: number, distance: number) => applyFilter('Flou de mouvement', (id) => filterBlurMotion(id, angle, distance)),
+    (angle: number, distance: number) =>
+      applyFilter('Flou de mouvement', (id) => filterBlurMotion(id, angle, distance)),
     [applyFilter],
   )
   const handleFilterBlurRadial = useCallback(
-    (strength: number, samples: number) => applyFilter('Flou radial', (id) => filterBlurRadial(id, strength, samples)),
+    (strength: number, samples: number) =>
+      applyFilter('Flou radial', (id) => filterBlurRadial(id, strength, samples)),
     [applyFilter],
   )
 

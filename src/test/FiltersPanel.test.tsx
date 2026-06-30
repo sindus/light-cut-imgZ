@@ -24,12 +24,20 @@ function renderPanel(props: Partial<typeof defaultProps> = {}) {
   return render(<FiltersPanel {...defaultProps} {...props} />)
 }
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
 describe('FiltersPanel', () => {
   it('renders nothing when tabId is null', () => {
     const { container } = render(
-      <FiltersPanel tabId={null} image={mockImage} isLoading={false} onApply={vi.fn()} onPreviewFilterChange={vi.fn()} />,
+      <FiltersPanel
+        tabId={null}
+        image={mockImage}
+        isLoading={false}
+        onApply={vi.fn()}
+        onPreviewFilterChange={vi.fn()}
+      />,
     )
     expect(container.firstChild).toBeNull()
   })
@@ -41,9 +49,19 @@ describe('FiltersPanel', () => {
 
   it('renders all 11 preset labels', () => {
     renderPanel()
-    ;['B&W', 'Sépia', 'Invert', 'Lomo', 'Vintage', 'Cool', 'Warm', 'Fade', 'Drama', 'Cross', 'Sketch'].forEach((name) =>
-      expect(screen.getAllByText(name).length).toBeGreaterThanOrEqual(1),
-    )
+    ;[
+      'B&W',
+      'Sépia',
+      'Invert',
+      'Lomo',
+      'Vintage',
+      'Cool',
+      'Warm',
+      'Fade',
+      'Drama',
+      'Cross',
+      'Sketch',
+    ].forEach((name) => expect(screen.getAllByText(name).length).toBeGreaterThanOrEqual(1))
   })
 
   it('renders placeholder tiles when image is null', () => {
@@ -64,8 +82,16 @@ describe('FiltersPanel', () => {
 
   it('renders all parametric section titles', () => {
     renderPanel()
-    ;['B&W Mixer', 'Vignette', 'Grain', 'Pixelate', 'Posterize', 'Blur',
-      'Cool / Warm', 'Cross-process', 'Duotone',
+    ;[
+      'B&W Mixer',
+      'Vignette',
+      'Grain',
+      'Pixelate',
+      'Posterize',
+      'Blur',
+      'Cool / Warm',
+      'Cross-process',
+      'Duotone',
     ].forEach((title) => expect(screen.getByText(title)).toBeInTheDocument())
     // Sépia, Lomo, Vintage, Drama, Fade also appear as preset labels — at least 2 occurrences each
     ;['Sépia', 'Lomo', 'Vintage', 'Drama', 'Fade'].forEach((title) =>
@@ -101,7 +127,10 @@ describe('FiltersPanel', () => {
     await userEvent.click(screen.getByTitle('B&W'))
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
     expect(defaultProps.onApply).toHaveBeenCalledWith({
-      type: 'grayscale', rWeight: 0.299, gWeight: 0.587, bWeight: 0.114,
+      type: 'grayscale',
+      rWeight: 0.299,
+      gWeight: 0.587,
+      bWeight: 0.114,
     })
   })
 
@@ -128,9 +157,12 @@ describe('FiltersPanel', () => {
     fireEvent.change(rSlider, { target: { value: '0.5' } })
     fireEvent.pointerUp(rSlider, { target: { value: '0.5' } })
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
-    expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'grayscale', rWeight: 0.5,
-    }))
+    expect(defaultProps.onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'grayscale',
+        rWeight: 0.5,
+      }),
+    )
   })
 
   it('B&W Mixer: onChange emits grayscale CSS preview', async () => {
@@ -150,9 +182,12 @@ describe('FiltersPanel', () => {
     fireEvent.change(strengthSlider, { target: { value: '0.5' } })
     fireEvent.pointerUp(strengthSlider, { target: { value: '0.5' } })
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
-    expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'vignette', strength: 0.5,
-    }))
+    expect(defaultProps.onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'vignette',
+        strength: 0.5,
+      }),
+    )
   })
 
   // ── Grain ─────────────────────────────────────────────────────────────────────
@@ -164,9 +199,13 @@ describe('FiltersPanel', () => {
     fireEvent.change(amountSlider, { target: { value: '0.6' } })
     fireEvent.pointerUp(amountSlider, { target: { value: '0.6' } })
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
-    expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'grain', amount: 0.6, monochrome: true,
-    }))
+    expect(defaultProps.onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'grain',
+        amount: 0.6,
+        monochrome: true,
+      }),
+    )
   })
 
   it('Grain: toggling monochrome checkbox triggers Rust call', async () => {
@@ -175,9 +214,12 @@ describe('FiltersPanel', () => {
     const checkbox = screen.getByRole('checkbox')
     await userEvent.click(checkbox)
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
-    expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'grain', monochrome: false,
-    }))
+    expect(defaultProps.onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'grain',
+        monochrome: false,
+      }),
+    )
   })
 
   // ── Pixelate ──────────────────────────────────────────────────────────────────
@@ -238,7 +280,11 @@ describe('FiltersPanel', () => {
     fireEvent.change(distSlider, { target: { value: '15' } })
     fireEvent.pointerUp(distSlider, { target: { value: '15' } })
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
-    expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'blur-motion', angle: 45, distance: 15 })
+    expect(defaultProps.onApply).toHaveBeenCalledWith({
+      type: 'blur-motion',
+      angle: 45,
+      distance: 15,
+    })
   })
 
   it('Blur: switching to radial shows strength and samples sliders', async () => {
@@ -256,9 +302,12 @@ describe('FiltersPanel', () => {
     fireEvent.change(strengthSlider, { target: { value: '0.5' } })
     fireEvent.pointerUp(strengthSlider, { target: { value: '0.5' } })
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
-    expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'blur-radial', strength: 0.5,
-    }))
+    expect(defaultProps.onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'blur-radial',
+        strength: 0.5,
+      }),
+    )
   })
 
   // ── Bonus parametric sections ─────────────────────────────────────────────────
@@ -352,19 +401,30 @@ describe('FiltersPanel', () => {
     await userEvent.click(screen.getByText('Duotone'))
     await userEvent.click(screen.getByText('Gold / Teal'))
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
-    expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'duotone',
-      shadowR: 60, shadowG: 20, shadowB: 0,
-      highlightR: 200, highlightG: 230, highlightB: 120,
-    }))
+    expect(defaultProps.onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'duotone',
+        shadowR: 60,
+        shadowG: 20,
+        shadowB: 0,
+        highlightR: 200,
+        highlightG: 230,
+        highlightB: 120,
+      }),
+    )
   })
 
   it('Duotone: all 6 pairs are rendered', async () => {
     renderPanel()
     await userEvent.click(screen.getByText('Duotone'))
-    ;['Gold / Teal', 'Purple / Yellow', 'Cyan / Red', 'Navy / Peach', 'Forest / Sun', 'Noir / Blanc'].forEach((name) =>
-      expect(screen.getByText(name)).toBeInTheDocument(),
-    )
+    ;[
+      'Gold / Teal',
+      'Purple / Yellow',
+      'Cyan / Red',
+      'Navy / Peach',
+      'Forest / Sun',
+      'Noir / Blanc',
+    ].forEach((name) => expect(screen.getByText(name)).toBeInTheDocument())
   })
 
   // ── Loading state ─────────────────────────────────────────────────────────────
@@ -386,8 +446,14 @@ describe('FiltersPanel', () => {
 
   it('second commit while first is in-flight is queued', async () => {
     let resolveFn: () => void
-    const onApply = vi.fn()
-      .mockImplementationOnce(() => new Promise<void>((resolve) => { resolveFn = resolve }))
+    const onApply = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveFn = resolve
+          }),
+      )
       .mockResolvedValue(undefined)
 
     renderPanel({ onApply })

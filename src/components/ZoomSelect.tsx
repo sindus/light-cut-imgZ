@@ -52,10 +52,7 @@ export function ZoomSelect({ zoom, presets, onChange }: ZoomSelectProps) {
                 setOpen(false)
               }}
               className={`px-3 py-1 text-xs text-center cursor-pointer tabular-nums select-none
-                ${p === zoom
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-200 hover:bg-slate-700'
-                }`}
+                ${p === zoom ? 'bg-indigo-600 text-white' : 'text-slate-200 hover:bg-slate-700'}`}
             >
               {formatZoom(p)}
             </li>

@@ -14,12 +14,19 @@ function renderPanel(props: Partial<typeof defaultProps> = {}) {
   return render(<AdjustmentsPanel {...defaultProps} {...props} />)
 }
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
 describe('AdjustmentsPanel', () => {
   it('renders nothing when tabId is null', () => {
     const { container } = render(
-      <AdjustmentsPanel tabId={null} isLoading={false} onApply={vi.fn()} onPreviewFilterChange={vi.fn()} />,
+      <AdjustmentsPanel
+        tabId={null}
+        isLoading={false}
+        onApply={vi.fn()}
+        onPreviewFilterChange={vi.fn()}
+      />,
     )
     expect(container.firstChild).toBeNull()
   })
@@ -31,10 +38,17 @@ describe('AdjustmentsPanel', () => {
 
   it('renders all 9 section titles', () => {
     renderPanel()
-    ;['Brightness / Contrast', 'Exposure', 'Hue / Saturation', 'Vibrance',
-      'Levels', 'Curves', 'White Balance', 'Sharpen', 'Denoise'].forEach((t) =>
-      expect(screen.getByText(t)).toBeInTheDocument(),
-    )
+    ;[
+      'Brightness / Contrast',
+      'Exposure',
+      'Hue / Saturation',
+      'Vibrance',
+      'Levels',
+      'Curves',
+      'White Balance',
+      'Sharpen',
+      'Denoise',
+    ].forEach((t) => expect(screen.getByText(t)).toBeInTheDocument())
   })
 
   it('has no Apply or Reset buttons', () => {
@@ -96,7 +110,11 @@ describe('AdjustmentsPanel', () => {
     fireEvent.change(ctSlider, { target: { value: '-30' } })
     fireEvent.pointerUp(ctSlider, { target: { value: '-30' } })
     await vi.waitFor(() => expect(onApply).toHaveBeenCalledTimes(1))
-    expect(onApply).toHaveBeenCalledWith({ type: 'brightness-contrast', brightness: 50, contrast: -30 })
+    expect(onApply).toHaveBeenCalledWith({
+      type: 'brightness-contrast',
+      brightness: 50,
+      contrast: -30,
+    })
   })
 
   it('Levels onCommit sends all 5 parameters', async () => {
@@ -107,9 +125,16 @@ describe('AdjustmentsPanel', () => {
     fireEvent.change(sliders[0], { target: { value: '20' } })
     fireEvent.pointerUp(sliders[0], { target: { value: '20' } })
     await vi.waitFor(() => expect(onApply).toHaveBeenCalledTimes(1))
-    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'levels', inBlack: 20, inWhite: 255, gamma: 1, outBlack: 0, outWhite: 255,
-    }))
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'levels',
+        inBlack: 20,
+        inWhite: 255,
+        gamma: 1,
+        outBlack: 0,
+        outWhite: 255,
+      }),
+    )
   })
 
   it('shows loading overlay when isLoading', () => {
@@ -120,9 +145,15 @@ describe('AdjustmentsPanel', () => {
 
   it('second commit while first is in flight is queued, not dropped', async () => {
     let resolveFn: () => void
-    const onApply = vi.fn().mockImplementationOnce(
-      () => new Promise<void>((resolve) => { resolveFn = resolve }),
-    ).mockResolvedValue(undefined)
+    const onApply = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveFn = resolve
+          }),
+      )
+      .mockResolvedValue(undefined)
 
     renderPanel({ onApply })
     await userEvent.click(screen.getByText('Exposure'))

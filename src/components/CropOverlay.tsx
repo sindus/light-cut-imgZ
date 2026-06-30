@@ -12,7 +12,13 @@ interface CropOverlayProps {
 
 const HANDLE_SIZE = 8
 
-export function CropOverlay({ imageWidth, imageHeight, onApply, onCancel, onCropRectChange }: CropOverlayProps) {
+export function CropOverlay({
+  imageWidth,
+  imageHeight,
+  onApply,
+  onCancel,
+  onCropRectChange,
+}: CropOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { cropRect, onPointerDown, onPointerMove, onPointerUp } = useCrop(imageWidth, imageHeight)
 

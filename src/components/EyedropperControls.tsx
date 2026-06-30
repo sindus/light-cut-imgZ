@@ -40,7 +40,10 @@ function CopyChip({
   onCopied: (label: string) => void
 }) {
   const handleClick = () => {
-    navigator.clipboard.writeText(value).then(() => onCopied(label)).catch(() => {})
+    navigator.clipboard
+      .writeText(value)
+      .then(() => onCopied(label))
+      .catch(() => {})
   }
 
   return (
@@ -51,7 +54,15 @@ function CopyChip({
     >
       <span className="text-slate-500 text-[10px] uppercase tracking-wider">{label}</span>
       <span>{value}</span>
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-0 group-hover:opacity-50 transition-opacity shrink-0">
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="opacity-0 group-hover:opacity-50 transition-opacity shrink-0"
+      >
         <rect x="9" y="9" width="13" height="13" rx="2" />
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
       </svg>
@@ -71,25 +82,39 @@ export function EyedropperControls({ color, onClose }: EyedropperControlsProps) 
   }
 
   const hex = color
-    ? `#${[color.r, color.g, color.b].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase()}`
+    ? `#${[color.r, color.g, color.b]
+        .map((v) => v.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase()}`
     : null
   const hsl = color ? rgbToHsl(color.r, color.g, color.b) : null
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700 shrink-0">
-      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider shrink-0">{t('eye.title')}</span>
+      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider shrink-0">
+        {t('eye.title')}
+      </span>
 
       {color && hex ? (
         <>
           <div
             className="w-5 h-5 rounded border border-slate-600 shrink-0 cursor-pointer"
             style={{ background: hex }}
-            onClick={() => { navigator.clipboard.writeText(hex).then(() => handleCopied('HEX')).catch(() => {}) }}
+            onClick={() => {
+              navigator.clipboard
+                .writeText(hex)
+                .then(() => handleCopied('HEX'))
+                .catch(() => {})
+            }}
             title="Click to copy HEX"
           />
           <div className="flex items-center gap-0.5 ml-1">
             <CopyChip label="HEX" value={hex} onCopied={handleCopied} />
-            <CopyChip label="RGB" value={`rgb(${color.r}, ${color.g}, ${color.b})`} onCopied={handleCopied} />
+            <CopyChip
+              label="RGB"
+              value={`rgb(${color.r}, ${color.g}, ${color.b})`}
+              onCopied={handleCopied}
+            />
             {color.a < 255 && (
               <CopyChip
                 label="RGBA"
@@ -98,7 +123,11 @@ export function EyedropperControls({ color, onClose }: EyedropperControlsProps) 
               />
             )}
             {hsl && (
-              <CopyChip label="HSL" value={`hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%)`} onCopied={handleCopied} />
+              <CopyChip
+                label="HSL"
+                value={`hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%)`}
+                onCopied={handleCopied}
+              />
             )}
           </div>
 
@@ -106,11 +135,20 @@ export function EyedropperControls({ color, onClose }: EyedropperControlsProps) 
           <div
             className={[
               'flex items-center gap-1 text-xs text-emerald-400 font-medium transition-all duration-200',
-              copiedLabel ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-1 pointer-events-none',
+              copiedLabel
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 -translate-x-1 pointer-events-none',
             ].join(' ')}
             aria-live="polite"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
             {t('eye.copied', { label: copiedLabel ?? '' })}

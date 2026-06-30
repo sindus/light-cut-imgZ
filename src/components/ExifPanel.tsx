@@ -58,7 +58,9 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
     <div className="w-56 border-l border-slate-700 bg-slate-900 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-3 py-2 border-b border-slate-700 flex items-center gap-1">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex-1">EXIF</span>
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex-1">
+          EXIF
+        </span>
         <button
           onClick={allHidden ? showAll : hideAll}
           title={allHidden ? t('exif.showall') : t('exif.hideall')}
@@ -79,10 +81,14 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
                 ${isHidden ? 'opacity-40' : ''}`}
             >
               <div className="flex-1 min-w-0">
-                <div className={`text-slate-400 text-xs leading-tight ${isHidden ? 'line-through' : ''}`}>
+                <div
+                  className={`text-slate-400 text-xs leading-tight ${isHidden ? 'line-through' : ''}`}
+                >
                   {f.tag}
                 </div>
-                <div className={`text-slate-200 text-xs leading-snug break-words ${isHidden ? 'line-through' : ''}`}>
+                <div
+                  className={`text-slate-200 text-xs leading-snug break-words ${isHidden ? 'line-through' : ''}`}
+                >
                   {f.value}
                 </div>
               </div>
@@ -100,9 +106,7 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
 
       {/* Footer */}
       <div className="border-t border-slate-700 px-3 py-2 flex flex-col gap-1.5">
-        <p className="text-slate-500 text-xs leading-snug">
-          {t('exif.lossless')}
-        </p>
+        <p className="text-slate-500 text-xs leading-snug">{t('exif.lossless')}</p>
         <button
           onClick={handleStrip}
           disabled={!tabId || stripping}

@@ -114,8 +114,18 @@ export default function App() {
   const [prefsOpen, setPrefsOpen] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs())
   const [recentFiles, setRecentFiles] = useState<string[]>(() => getRecentFiles())
-  const [pickedColor, setPickedColor] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
-  const [pickedColorResult, setPickedColorResult] = useState<{ r: number; g: number; b: number; a: number } | null>(null)
+  const [pickedColor, setPickedColor] = useState<{
+    r: number
+    g: number
+    b: number
+    a: number
+  } | null>(null)
+  const [pickedColorResult, setPickedColorResult] = useState<{
+    r: number
+    g: number
+    b: number
+    a: number
+  } | null>(null)
   const [showAdjustments, setShowAdjustments] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const previewImgRef = useRef<HTMLImageElement | null>(null)
@@ -131,7 +141,7 @@ export default function App() {
   // Sync menu checkmarks with saved language on startup
   useEffect(() => {
     setLanguageCheck(prefs.language ?? 'en').catch(() => {})
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Tauri menu / native events + drag-drop
@@ -177,11 +187,21 @@ export default function App() {
       unlistenSetLanguage.then((fn) => fn())
       unlistenDrop.then((fn) => fn())
     }
-  }, [handleOpen, handleCloseTab, handleCloseOtherTabs, handleCloseAllTabs, handleUndo, handleRedo, handleOpenByPaths])
+  }, [
+    handleOpen,
+    handleCloseTab,
+    handleCloseOtherTabs,
+    handleCloseAllTabs,
+    handleUndo,
+    handleRedo,
+    handleOpenByPaths,
+  ])
 
   // Track recent files from newly opened tabs
   useEffect(() => {
-    tabs.forEach((t) => { if (t.image.path) addRecentFile(t.image.path) })
+    tabs.forEach((t) => {
+      if (t.image.path) addRecentFile(t.image.path)
+    })
     setRecentFiles(getRecentFiles())
   }, [tabs])
 
@@ -199,7 +219,8 @@ export default function App() {
             e.preventDefault()
             handleRedo()
             break
-          case '=': case '+':
+          case '=':
+          case '+':
             e.preventDefault()
             setZoom((z) => z * ZOOM_STEP)
             break
@@ -212,7 +233,10 @@ export default function App() {
             setZoom(1)
             break
           case 'c':
-            if (!e.shiftKey) { e.preventDefault(); handleCopyToClipboard() }
+            if (!e.shiftKey) {
+              e.preventDefault()
+              handleCopyToClipboard()
+            }
             break
         }
       } else if (e.key === 'Escape' && mode === 'eyedropper') {
@@ -225,12 +249,20 @@ export default function App() {
 
   // Load EXIF when panel opens or tab changes
   useEffect(() => {
-    if (!showExif || !activeTabId) { if (!activeTabId) setExifFields([]); return }
+    if (!showExif || !activeTabId) {
+      if (!activeTabId) setExifFields([])
+      return
+    }
     setExifLoading(true)
-    loadExif(activeTabId).then((fields) => { setExifFields(fields); setExifLoading(false) })
+    loadExif(activeTabId).then((fields) => {
+      setExifFields(fields)
+      setExifLoading(false)
+    })
   }, [showExif, activeTabId, loadExif])
 
-  useEffect(() => { if (mode !== 'eyedropper') setPickedColor(null) }, [mode])
+  useEffect(() => {
+    if (mode !== 'eyedropper') setPickedColor(null)
+  }, [mode])
 
   const handleColorPickConfirm = (color: { r: number; g: number; b: number; a: number }) => {
     setPickedColorResult(color)
@@ -238,10 +270,20 @@ export default function App() {
   }
 
   const onCropMode = () => {
-    if (mode === 'cropping') { exitCropMode() } else { setShowFlipBar(false); enterCropMode() }
+    if (mode === 'cropping') {
+      exitCropMode()
+    } else {
+      setShowFlipBar(false)
+      enterCropMode()
+    }
   }
   const onRotateMode = () => {
-    if (mode === 'rotating') { exitRotateMode() } else { setShowFlipBar(false); enterRotateMode() }
+    if (mode === 'rotating') {
+      exitRotateMode()
+    } else {
+      setShowFlipBar(false)
+      enterRotateMode()
+    }
   }
   const onEyedropperMode = () => {
     if (mode === 'eyedropper') {
@@ -254,39 +296,102 @@ export default function App() {
   }
   const handleFilterCommand = async (cmd: FilterCommand) => {
     switch (cmd.type) {
-      case 'grayscale': await handleFilterGrayscale(cmd.rWeight, cmd.gWeight, cmd.bWeight); break
-      case 'sepia': await handleFilterSepia(cmd.intensity); break
-      case 'invert': await handleFilterInvert(); break
-      case 'vignette': await handleFilterVignette(cmd.strength, cmd.feather); break
-      case 'grain': await handleFilterGrain(cmd.amount, cmd.monochrome); break
-      case 'pixelate': await handleFilterPixelate(cmd.size); break
-      case 'posterize': await handleFilterPosterize(cmd.levels); break
-      case 'duotone': await handleFilterDuotone(cmd.shadowR, cmd.shadowG, cmd.shadowB, cmd.highlightR, cmd.highlightG, cmd.highlightB); break
-      case 'sketch': await handleFilterSketch(); break
-      case 'lomo': await handleFilterLomo(cmd.intensity); break
-      case 'vintage': await handleFilterVintage(cmd.intensity); break
-      case 'cool': await handleFilterCool(cmd.intensity); break
-      case 'warm': await handleFilterWarm(cmd.intensity); break
-      case 'fade': await handleFilterFade(cmd.intensity); break
-      case 'drama': await handleFilterDrama(cmd.intensity); break
-      case 'cross-process': await handleFilterCrossProcess(cmd.intensity); break
-      case 'blur-gaussian': await handleFilterBlurGaussian(cmd.radius); break
-      case 'blur-motion': await handleFilterBlurMotion(cmd.angle, cmd.distance); break
-      case 'blur-radial': await handleFilterBlurRadial(cmd.strength, cmd.samples); break
+      case 'grayscale':
+        await handleFilterGrayscale(cmd.rWeight, cmd.gWeight, cmd.bWeight)
+        break
+      case 'sepia':
+        await handleFilterSepia(cmd.intensity)
+        break
+      case 'invert':
+        await handleFilterInvert()
+        break
+      case 'vignette':
+        await handleFilterVignette(cmd.strength, cmd.feather)
+        break
+      case 'grain':
+        await handleFilterGrain(cmd.amount, cmd.monochrome)
+        break
+      case 'pixelate':
+        await handleFilterPixelate(cmd.size)
+        break
+      case 'posterize':
+        await handleFilterPosterize(cmd.levels)
+        break
+      case 'duotone':
+        await handleFilterDuotone(
+          cmd.shadowR,
+          cmd.shadowG,
+          cmd.shadowB,
+          cmd.highlightR,
+          cmd.highlightG,
+          cmd.highlightB,
+        )
+        break
+      case 'sketch':
+        await handleFilterSketch()
+        break
+      case 'lomo':
+        await handleFilterLomo(cmd.intensity)
+        break
+      case 'vintage':
+        await handleFilterVintage(cmd.intensity)
+        break
+      case 'cool':
+        await handleFilterCool(cmd.intensity)
+        break
+      case 'warm':
+        await handleFilterWarm(cmd.intensity)
+        break
+      case 'fade':
+        await handleFilterFade(cmd.intensity)
+        break
+      case 'drama':
+        await handleFilterDrama(cmd.intensity)
+        break
+      case 'cross-process':
+        await handleFilterCrossProcess(cmd.intensity)
+        break
+      case 'blur-gaussian':
+        await handleFilterBlurGaussian(cmd.radius)
+        break
+      case 'blur-motion':
+        await handleFilterBlurMotion(cmd.angle, cmd.distance)
+        break
+      case 'blur-radial':
+        await handleFilterBlurRadial(cmd.strength, cmd.samples)
+        break
     }
   }
 
   const handleAdjustmentCommand = async (cmd: AdjustmentCommand) => {
     switch (cmd.type) {
-      case 'brightness-contrast': await handleAdjustBrightnessContrast(cmd.brightness, cmd.contrast); break
-      case 'exposure': await handleAdjustExposure(cmd.exposure); break
-      case 'hue-saturation': await handleAdjustHueSaturation(cmd.hue, cmd.saturation, cmd.lightness); break
-      case 'vibrance': await handleAdjustVibrance(cmd.vibrance); break
-      case 'levels': await handleAdjustLevels(cmd.inBlack, cmd.inWhite, cmd.gamma, cmd.outBlack, cmd.outWhite); break
-      case 'curves': await handleAdjustCurves(cmd.points); break
-      case 'white-balance': await handleAdjustWhiteBalance(cmd.temperature, cmd.tint); break
-      case 'sharpen': await handleAdjustSharpen(cmd.amount, cmd.radius, cmd.threshold); break
-      case 'denoise': await handleAdjustDenoise(cmd.strength); break
+      case 'brightness-contrast':
+        await handleAdjustBrightnessContrast(cmd.brightness, cmd.contrast)
+        break
+      case 'exposure':
+        await handleAdjustExposure(cmd.exposure)
+        break
+      case 'hue-saturation':
+        await handleAdjustHueSaturation(cmd.hue, cmd.saturation, cmd.lightness)
+        break
+      case 'vibrance':
+        await handleAdjustVibrance(cmd.vibrance)
+        break
+      case 'levels':
+        await handleAdjustLevels(cmd.inBlack, cmd.inWhite, cmd.gamma, cmd.outBlack, cmd.outWhite)
+        break
+      case 'curves':
+        await handleAdjustCurves(cmd.points)
+        break
+      case 'white-balance':
+        await handleAdjustWhiteBalance(cmd.temperature, cmd.tint)
+        break
+      case 'sharpen':
+        await handleAdjustSharpen(cmd.amount, cmd.radius, cmd.threshold)
+        break
+      case 'denoise':
+        await handleAdjustDenoise(cmd.strength)
+        break
     }
   }
 
@@ -303,200 +408,258 @@ export default function App() {
 
   return (
     <LangProvider lang={prefs.language ?? 'en'}>
-    <div className="flex h-screen overflow-hidden">
-      {/* Left sidebar */}
-      <Toolbar
-        hasImage={!!image}
-        mode={mode}
-        isLoading={isLoading}
-        showFlipBar={showFlipBar}
-        onCropMode={onCropMode}
-        onRotateMode={onRotateMode}
-        onFlipOpen={onFlipOpen}
-        onResizeOpen={() => setResizeOpen(true)}
-        onCanvasResizeOpen={() => setCanvasResizeOpen(true)}
-        onExportOpen={() => setExportOpen(true)}
-        showExif={showExif}
-        onToggleExif={() => setShowExif((p) => !p)}
-        showGrid={showGrid}
-        onToggleGrid={() => setShowGrid((g) => !g)}
-        showAdjustments={showAdjustments}
-        onAdjustmentsOpen={() => { setShowAdjustments((p) => !p); setShowFilters(false) }}
-        showFilters={showFilters}
-        onFiltersOpen={() => { setShowFilters((p) => !p); setShowAdjustments(false) }}
-        onCopy={handleCopyToClipboard}
-        onEyedropperMode={onEyedropperMode}
-        onPrefsOpen={() => setPrefsOpen(true)}
-      />
-
-      {/* Center + right column */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <TabBar
-          tabs={tabs}
-          activeTabId={activeTabId}
-          onSelect={setActiveTab}
-          onClose={handleCloseTab}
+      <div className="flex h-screen overflow-hidden">
+        {/* Left sidebar */}
+        <Toolbar
+          hasImage={!!image}
+          mode={mode}
+          isLoading={isLoading}
+          showFlipBar={showFlipBar}
+          onCropMode={onCropMode}
+          onRotateMode={onRotateMode}
+          onFlipOpen={onFlipOpen}
+          onResizeOpen={() => setResizeOpen(true)}
+          onCanvasResizeOpen={() => setCanvasResizeOpen(true)}
+          onExportOpen={() => setExportOpen(true)}
+          showExif={showExif}
+          onToggleExif={() => setShowExif((p) => !p)}
+          showGrid={showGrid}
+          onToggleGrid={() => setShowGrid((g) => !g)}
+          showAdjustments={showAdjustments}
+          onAdjustmentsOpen={() => {
+            setShowAdjustments((p) => !p)
+            setShowFilters(false)
+          }}
+          showFilters={showFilters}
+          onFiltersOpen={() => {
+            setShowFilters((p) => !p)
+            setShowAdjustments(false)
+          }}
+          onCopy={handleCopyToClipboard}
+          onEyedropperMode={onEyedropperMode}
+          onPrefsOpen={() => setPrefsOpen(true)}
         />
 
-        {error && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-red-900/50 border-b border-red-700 text-red-200 text-sm">
-            <span className="flex-1">{error}</span>
-            <button onClick={clearError} className="text-red-300 hover:text-white transition-colors" aria-label="Dismiss error">✕</button>
-          </div>
-        )}
-
-        {/* Contextual bars */}
-        {mode === 'cropping' && (
-          <CropControls
-            cropRect={cropRect}
-            isLoading={isLoading}
-            onApply={() => handleCropApply(cropRect)}
-            onCancel={exitCropMode}
-          />
-        )}
-        {mode === 'rotating' && (
-          <RotationControls
-            onRotate={handleRotate}
-            onCancel={exitRotateMode}
-            isLoading={isLoading}
-          />
-        )}
-        {(mode === 'eyedropper' || pickedColorResult) && (
-          <EyedropperControls
-            color={mode === 'eyedropper' ? pickedColor : pickedColorResult}
-            onClose={() => { exitEyedropperMode(); setPickedColorResult(null) }}
-          />
-        )}
-        {showFlipBar && (
-          <FlipControls
-            isLoading={isLoading}
-            onFlipH={() => handleFlip('horizontal')}
-            onFlipV={() => handleFlip('vertical')}
-            onClose={() => setShowFlipBar(false)}
-          />
-        )}
-
-        {/* Main content row */}
-        <div className="flex flex-1 overflow-hidden">
-          <Canvas
-            image={image}
-            mode={mode}
-            zoom={zoom}
-            showGrid={showGrid}
-            gridSize={prefs.gridSize}
-            recentFiles={recentFiles}
-            isLoading={isLoading}
-            onCropApply={handleCropApply}
-            onCropCancel={exitCropMode}
-            onCropRectChange={setCropRect}
-            onZoomChange={setZoom}
-            onOpen={handleOpen}
-            onOpenByPaths={handleOpenByPaths}
-            onColorPick={setPickedColor}
-            onColorPickConfirm={handleColorPickConfirm}
-            onImageRef={(el) => { previewImgRef.current = el }}
+        {/* Center + right column */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <TabBar
+            tabs={tabs}
+            activeTabId={activeTabId}
+            onSelect={setActiveTab}
+            onClose={handleCloseTab}
           />
 
-          {showAdjustments && (
-            <AdjustmentsPanel
-              tabId={activeTabId}
+          {error && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-red-900/50 border-b border-red-700 text-red-200 text-sm">
+              <span className="flex-1">{error}</span>
+              <button
+                onClick={clearError}
+                className="text-red-300 hover:text-white transition-colors"
+                aria-label="Dismiss error"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Contextual bars */}
+          {mode === 'cropping' && (
+            <CropControls
+              cropRect={cropRect}
               isLoading={isLoading}
-              onApply={handleAdjustmentCommand}
-              onPreviewFilterChange={handlePreviewFilterChange}
+              onApply={() => handleCropApply(cropRect)}
+              onCancel={exitCropMode}
+            />
+          )}
+          {mode === 'rotating' && (
+            <RotationControls
+              onRotate={handleRotate}
+              onCancel={exitRotateMode}
+              isLoading={isLoading}
+            />
+          )}
+          {(mode === 'eyedropper' || pickedColorResult) && (
+            <EyedropperControls
+              color={mode === 'eyedropper' ? pickedColor : pickedColorResult}
+              onClose={() => {
+                exitEyedropperMode()
+                setPickedColorResult(null)
+              }}
+            />
+          )}
+          {showFlipBar && (
+            <FlipControls
+              isLoading={isLoading}
+              onFlipH={() => handleFlip('horizontal')}
+              onFlipV={() => handleFlip('vertical')}
+              onClose={() => setShowFlipBar(false)}
             />
           )}
 
-          {showFilters && (
-            <FiltersPanel
-              tabId={activeTabId}
+          {/* Main content row */}
+          <div className="flex flex-1 overflow-hidden">
+            <Canvas
               image={image}
+              mode={mode}
+              zoom={zoom}
+              showGrid={showGrid}
+              gridSize={prefs.gridSize}
+              recentFiles={recentFiles}
               isLoading={isLoading}
-              onApply={handleFilterCommand}
-              onPreviewFilterChange={handlePreviewFilterChange}
+              onCropApply={handleCropApply}
+              onCropCancel={exitCropMode}
+              onCropRectChange={setCropRect}
+              onZoomChange={setZoom}
+              onOpen={handleOpen}
+              onOpenByPaths={handleOpenByPaths}
+              onColorPick={setPickedColor}
+              onColorPickConfirm={handleColorPickConfirm}
+              onImageRef={(el) => {
+                previewImgRef.current = el
+              }}
             />
-          )}
 
-          {showHistory && (
-            <HistoryPanel
-              history={history}
-              currentIndex={historyIndex}
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              isLoading={isLoading}
-            />
-          )}
+            {showAdjustments && (
+              <AdjustmentsPanel
+                tabId={activeTabId}
+                isLoading={isLoading}
+                onApply={handleAdjustmentCommand}
+                onPreviewFilterChange={handlePreviewFilterChange}
+              />
+            )}
 
-          {showExif && image && (
-            <ExifPanel
-              tabId={activeTabId}
-              fields={exifFields}
-              isLoading={exifLoading}
-              onStrip={() => activeTabId ? handleStripExif(activeTabId) : Promise.resolve()}
-            />
+            {showFilters && (
+              <FiltersPanel
+                tabId={activeTabId}
+                image={image}
+                isLoading={isLoading}
+                onApply={handleFilterCommand}
+                onPreviewFilterChange={handlePreviewFilterChange}
+              />
+            )}
+
+            {showHistory && (
+              <HistoryPanel
+                history={history}
+                currentIndex={historyIndex}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                isLoading={isLoading}
+              />
+            )}
+
+            {showExif && image && (
+              <ExifPanel
+                tabId={activeTabId}
+                fields={exifFields}
+                isLoading={exifLoading}
+                onStrip={() => (activeTabId ? handleStripExif(activeTabId) : Promise.resolve())}
+              />
+            )}
+          </div>
+
+          {/* Status bar */}
+          {image && (
+            <div className="px-4 py-1 bg-slate-900 border-t border-slate-700 text-xs text-slate-500 flex items-center gap-4 shrink-0">
+              <span>
+                {image.width} × {image.height} px
+              </span>
+              <span>{image.format.toUpperCase()}</span>
+
+              {mode === 'eyedropper' && pickedColor && pickedHex && (
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-3.5 h-3.5 rounded-sm border border-slate-600"
+                    style={{ background: pickedHex }}
+                  />
+                  <span className="text-slate-300 font-mono">{pickedHex.toUpperCase()}</span>
+                  <span className="text-slate-600">
+                    rgb({pickedColor.r}, {pickedColor.g}, {pickedColor.b})
+                  </span>
+                </div>
+              )}
+
+              <div className="flex-1" />
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setZoom((z) => z / ZOOM_STEP)}
+                  className="toolbar-btn px-1.5 py-0.5 text-xs"
+                  title="Zoom out (Ctrl+-)"
+                  aria-label="Zoom out"
+                >
+                  −
+                </button>
+                <ZoomSelect zoom={zoom} presets={ZOOM_PRESETS} onChange={setZoom} />
+                <button
+                  onClick={() => setZoom((z) => z * ZOOM_STEP)}
+                  className="toolbar-btn px-1.5 py-0.5 text-xs"
+                  title="Zoom in (Ctrl+=)"
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setZoom(1)}
+                  className="toolbar-btn px-1.5 py-0.5 text-xs text-slate-500"
+                  title="Reset zoom (Ctrl+0)"
+                  aria-label="Reset zoom"
+                >
+                  1:1
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Status bar */}
-        {image && (
-          <div className="px-4 py-1 bg-slate-900 border-t border-slate-700 text-xs text-slate-500 flex items-center gap-4 shrink-0">
-            <span>{image.width} × {image.height} px</span>
-            <span>{image.format.toUpperCase()}</span>
-
-            {mode === 'eyedropper' && pickedColor && pickedHex && (
-              <div className="flex items-center gap-1.5">
-                <div className="w-3.5 h-3.5 rounded-sm border border-slate-600" style={{ background: pickedHex }} />
-                <span className="text-slate-300 font-mono">{pickedHex.toUpperCase()}</span>
-                <span className="text-slate-600">rgb({pickedColor.r}, {pickedColor.g}, {pickedColor.b})</span>
-              </div>
-            )}
-
-            <div className="flex-1" />
-
-            <div className="flex items-center gap-1">
-              <button onClick={() => setZoom((z) => z / ZOOM_STEP)} className="toolbar-btn px-1.5 py-0.5 text-xs" title="Zoom out (Ctrl+-)" aria-label="Zoom out">−</button>
-              <ZoomSelect zoom={zoom} presets={ZOOM_PRESETS} onChange={setZoom} />
-              <button onClick={() => setZoom((z) => z * ZOOM_STEP)} className="toolbar-btn px-1.5 py-0.5 text-xs" title="Zoom in (Ctrl+=)" aria-label="Zoom in">+</button>
-              <button onClick={() => setZoom(1)} className="toolbar-btn px-1.5 py-0.5 text-xs text-slate-500" title="Reset zoom (Ctrl+0)" aria-label="Reset zoom">1:1</button>
-            </div>
-          </div>
-        )}
+        {/* Dialogs */}
+        <ExportDialog
+          open={exportOpen}
+          isLoading={isLoading}
+          defaultFormat={prefs.defaultExportFormat}
+          defaultQuality={prefs.defaultJpegQuality}
+          onExport={async (format, quality) => {
+            await handleExport(format, quality)
+            setExportOpen(false)
+          }}
+          onClose={() => setExportOpen(false)}
+        />
+        <CanvasResizeDialog
+          open={canvasResizeOpen}
+          originalWidth={image?.width ?? 0}
+          originalHeight={image?.height ?? 0}
+          isLoading={isLoading}
+          onResize={async (w, h, anchor, fill) => {
+            await handleCanvasResize(w, h, anchor, fill)
+            setCanvasResizeOpen(false)
+          }}
+          onClose={() => setCanvasResizeOpen(false)}
+        />
+        <ResizeDialog
+          open={resizeOpen}
+          originalWidth={image?.width ?? 0}
+          originalHeight={image?.height ?? 0}
+          isLoading={isLoading}
+          onResize={async (w, h) => {
+            await handleResize(w, h)
+            setResizeOpen(false)
+          }}
+          onClose={() => setResizeOpen(false)}
+        />
+        <AboutDialog open={aboutOpen} version={aboutVersion} onClose={() => setAboutOpen(false)} />
+        <PrefsDialog
+          open={prefsOpen}
+          prefs={prefs}
+          onSave={(p) => {
+            savePrefs(p)
+            setPrefs(p)
+            setPrefsOpen(false)
+          }}
+          onClose={() => setPrefsOpen(false)}
+        />
       </div>
-
-      {/* Dialogs */}
-      <ExportDialog
-        open={exportOpen}
-        isLoading={isLoading}
-        defaultFormat={prefs.defaultExportFormat}
-        defaultQuality={prefs.defaultJpegQuality}
-        onExport={async (format, quality) => { await handleExport(format, quality); setExportOpen(false) }}
-        onClose={() => setExportOpen(false)}
-      />
-      <CanvasResizeDialog
-        open={canvasResizeOpen}
-        originalWidth={image?.width ?? 0}
-        originalHeight={image?.height ?? 0}
-        isLoading={isLoading}
-        onResize={async (w, h, anchor, fill) => { await handleCanvasResize(w, h, anchor, fill); setCanvasResizeOpen(false) }}
-        onClose={() => setCanvasResizeOpen(false)}
-      />
-      <ResizeDialog
-        open={resizeOpen}
-        originalWidth={image?.width ?? 0}
-        originalHeight={image?.height ?? 0}
-        isLoading={isLoading}
-        onResize={async (w, h) => { await handleResize(w, h); setResizeOpen(false) }}
-        onClose={() => setResizeOpen(false)}
-      />
-      <AboutDialog open={aboutOpen} version={aboutVersion} onClose={() => setAboutOpen(false)} />
-      <PrefsDialog
-        open={prefsOpen}
-        prefs={prefs}
-        onSave={(p) => { savePrefs(p); setPrefs(p); setPrefsOpen(false) }}
-        onClose={() => setPrefsOpen(false)}
-      />
-    </div>
     </LangProvider>
   )
 }

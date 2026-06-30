@@ -32,9 +32,9 @@ interface CanvasProps {
 const ZOOM_STEP = 1.15
 
 // Magnifier constants
-const MAG_GRID = 13  // pixels shown (odd so center is clear)
-const MAG_CELL = 10  // display px per pixel
-const MAG_SIZE = MAG_GRID * MAG_CELL  // = 130
+const MAG_GRID = 13 // pixels shown (odd so center is clear)
+const MAG_CELL = 10 // display px per pixel
+const MAG_SIZE = MAG_GRID * MAG_CELL // = 130
 
 export function Canvas({
   image,
@@ -140,8 +140,14 @@ export function Canvas({
           ctx.strokeStyle = 'rgba(0,0,0,0.25)'
           ctx.lineWidth = 0.5
           for (let i = 1; i < MAG_GRID; i++) {
-            ctx.beginPath(); ctx.moveTo(i * MAG_CELL, 0); ctx.lineTo(i * MAG_CELL, MAG_SIZE); ctx.stroke()
-            ctx.beginPath(); ctx.moveTo(0, i * MAG_CELL); ctx.lineTo(MAG_SIZE, i * MAG_CELL); ctx.stroke()
+            ctx.beginPath()
+            ctx.moveTo(i * MAG_CELL, 0)
+            ctx.lineTo(i * MAG_CELL, MAG_SIZE)
+            ctx.stroke()
+            ctx.beginPath()
+            ctx.moveTo(0, i * MAG_CELL)
+            ctx.lineTo(MAG_SIZE, i * MAG_CELL)
+            ctx.stroke()
           }
 
           // Center pixel highlight
@@ -173,9 +179,15 @@ export function Canvas({
         return
       }
       const offscreen = offscreenRef.current
-      if (!offscreen) { onColorPick?.(null); return }
+      if (!offscreen) {
+        onColorPick?.(null)
+        return
+      }
       const ctx = offscreen.getContext('2d')
-      if (!ctx) { onColorPick?.(null); return }
+      if (!ctx) {
+        onColorPick?.(null)
+        return
+      }
       const [r, g, b, a] = ctx.getImageData(imgX, imgY, 1, 1).data
       const color: PickedColor = { r, g, b, a }
       lastPickedRef.current = color
@@ -244,21 +256,37 @@ export function Canvas({
 
         {recentFiles.length > 0 && (
           <div className="mt-2 w-72">
-            <p className="text-xs text-slate-600 mb-2 text-center uppercase tracking-wider">{t('canvas.recent')}</p>
+            <p className="text-xs text-slate-600 mb-2 text-center uppercase tracking-wider">
+              {t('canvas.recent')}
+            </p>
             <div className="flex flex-col gap-0.5">
               {recentFiles.map((path) => {
                 const loading = loadingPath === path
                 return (
                   <button
                     key={path}
-                    onClick={() => { setLoadingPath(path); onOpenByPaths?.([path]) }}
+                    onClick={() => {
+                      setLoadingPath(path)
+                      onOpenByPaths?.([path])
+                    }}
                     disabled={isLoading}
                     className="text-left text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800 px-3 py-1.5 rounded transition-colors truncate flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
                     title={path}
                   >
                     {loading ? (
-                      <svg className="animate-spin w-3 h-3 shrink-0 text-indigo-400" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <svg
+                        className="animate-spin w-3 h-3 shrink-0 text-indigo-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
                     ) : null}

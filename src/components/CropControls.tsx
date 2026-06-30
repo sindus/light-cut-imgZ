@@ -12,7 +12,9 @@ export function CropControls({ cropRect, isLoading, onApply, onCancel }: CropCon
   const t = useT()
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-slate-800 border-b border-slate-700 shrink-0">
-      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{t('toolbar.crop')}</span>
+      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">
+        {t('toolbar.crop')}
+      </span>
       <span className="text-xs text-slate-500 bg-slate-700/60 px-2 py-0.5 rounded font-mono">
         {cropRect.width} × {cropRect.height}
       </span>

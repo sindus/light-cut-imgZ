@@ -17,7 +17,9 @@ export function RotationControls({ onRotate, onCancel, isLoading }: RotationCont
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-slate-800 border-t border-slate-700">
-      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{t('toolbar.rotate')}</span>
+      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">
+        {t('toolbar.rotate')}
+      </span>
 
       <button
         onClick={() => onRotate(-90)}

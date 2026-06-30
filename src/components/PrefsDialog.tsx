@@ -79,7 +79,9 @@ export function PrefsDialog({ open, prefs, onSave, onClose }: Props) {
             min="1"
             max="100"
             value={local.defaultJpegQuality}
-            onChange={(e) => setLocal((p) => ({ ...p, defaultJpegQuality: Number(e.target.value) }))}
+            onChange={(e) =>
+              setLocal((p) => ({ ...p, defaultJpegQuality: Number(e.target.value) }))
+            }
             className="w-full accent-indigo-500"
           />
         </div>
@@ -93,7 +95,9 @@ export function PrefsDialog({ open, prefs, onSave, onClose }: Props) {
             className="flex-1 bg-slate-700 border border-slate-600 text-white text-sm rounded px-2 py-1.5"
           >
             {GRID_SIZES.map((s) => (
-              <option key={s} value={s}>{s} px</option>
+              <option key={s} value={s}>
+                {s} px
+              </option>
             ))}
           </select>
         </div>

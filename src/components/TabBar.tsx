@@ -19,9 +19,10 @@ export function TabBar({ tabs, activeTabId, onSelect, onClose }: TabBarProps) {
             key={tab.id}
             onClick={() => onSelect(tab.id)}
             className={`group flex items-center gap-1.5 px-3 py-1.5 text-sm cursor-pointer border-r border-slate-700 whitespace-nowrap select-none min-w-0 max-w-48 flex-shrink-0
-              ${isActive
-                ? 'bg-slate-800 text-white border-t-2 border-t-indigo-400 pt-[4px]'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              ${
+                isActive
+                  ? 'bg-slate-800 text-white border-t-2 border-t-indigo-400 pt-[4px]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
           >
             <span className="truncate flex-1">{tab.label}</span>
