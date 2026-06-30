@@ -219,7 +219,7 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
   const pendingRef = useRef<FilterCommand | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  const showOverlay = () => { if (overlayRef.current) overlayRef.current.style.display = 'block' }
+  const showOverlay = () => { if (overlayRef.current) overlayRef.current.style.display = 'flex' }
   const hideOverlay = () => { if (overlayRef.current) overlayRef.current.style.display = 'none' }
 
   const commitToRust = useCallback(async (cmd: FilterCommand) => {
@@ -248,9 +248,14 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
       {/* Overlay */}
       <div
         ref={overlayRef}
-        className="absolute inset-0 bg-slate-900/70 z-10 flex items-center justify-center"
-        style={{ display: isLoading ? 'block' : 'none' }}
-      />
+        className="absolute inset-0 bg-slate-900/60 z-10 flex items-center justify-center"
+        style={{ display: isLoading ? 'flex' : 'none' }}
+      >
+        <svg className="animate-spin w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        </svg>
+      </div>
 
       {/* Header */}
       <div className="px-3 py-2.5 border-b border-slate-700 shrink-0">
@@ -268,18 +273,14 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
 
       <div className="overflow-y-auto flex-1">
         {/* Preset grid */}
-        <div
-          className="grid grid-cols-3 gap-1.5 p-2"
-          onMouseLeave={() => { if (!inFlightRef.current) onPreviewFilterChange(null) }}
-        >
+        <div className="grid grid-cols-3 gap-1.5 p-2">
           {PRESETS.map((preset) => {
             const presetName = t(preset.nameKey)
             return (
               <button
                 key={preset.id}
                 className="flex flex-col items-center gap-1 p-1 rounded hover:bg-slate-700/50 transition-colors group"
-                onMouseEnter={() => onPreviewFilterChange(preset.css)}
-                onClick={() => { onPreviewFilterChange(preset.css); commitToRust(preset.cmd) }}
+                onClick={() => commitToRust(preset.cmd)}
                 title={presetName}
               >
                 <div className="w-full aspect-video overflow-hidden rounded-sm bg-slate-800">

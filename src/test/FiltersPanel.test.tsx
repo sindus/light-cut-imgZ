@@ -94,20 +94,7 @@ describe('FiltersPanel', () => {
     expect(screen.getAllByRole('slider')).toHaveLength(1)
   })
 
-  // ── Preset hover / click ──────────────────────────────────────────────────────
-
-  it('hovering a preset calls onPreviewFilterChange with CSS', async () => {
-    renderPanel()
-    await userEvent.hover(screen.getByTitle('B&W'))
-    expect(defaultProps.onPreviewFilterChange).toHaveBeenCalledWith('grayscale(1)')
-  })
-
-  it('mouse leaving the preset grid clears the preview', async () => {
-    renderPanel()
-    const grid = screen.getByTitle('B&W').closest('[class*="grid"]') as HTMLElement
-    fireEvent.mouseLeave(grid)
-    expect(defaultProps.onPreviewFilterChange).toHaveBeenCalledWith(null)
-  })
+  // ── Preset click ─────────────────────────────────────────────────────────────
 
   it('clicking the grayscale preset calls onApply with grayscale cmd', async () => {
     renderPanel()
