@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { clearRecentFiles } from '../lib/recentFiles'
 import type { Prefs } from '../lib/prefs'
 import type { ExportFormat } from '../types'
+import { useT } from '../lib/locale'
 
 interface Props {
   open: boolean
@@ -21,6 +22,7 @@ const FORMATS: Array<{ value: ExportFormat; label: string }> = [
 const GRID_SIZES = [10, 25, 50, 100]
 
 export function PrefsDialog({ open, prefs, onSave, onClose }: Props) {
+  const t = useT()
   const [local, setLocal] = useState<Prefs>(prefs)
 
   if (!open) return null
@@ -38,11 +40,11 @@ export function PrefsDialog({ open, prefs, onSave, onClose }: Props) {
         className="bg-slate-800 border border-slate-600 rounded-lg shadow-2xl p-6 w-96 flex flex-col gap-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-white font-semibold text-base">Preferences</h2>
+        <h2 className="text-white font-semibold text-base">{t('pref.title')}</h2>
 
         {/* Default export format */}
         <div>
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Default export format</p>
+          <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">{t('pref.format')}</p>
           <div className="grid grid-cols-5 gap-1.5">
             {FORMATS.map((f) => (
               <label
@@ -70,7 +72,7 @@ export function PrefsDialog({ open, prefs, onSave, onClose }: Props) {
         {/* Default JPEG quality */}
         <div>
           <label className="text-xs text-slate-400 uppercase tracking-wider block mb-2">
-            Default JPEG quality: {local.defaultJpegQuality}%
+            {t('pref.quality', { n: String(local.defaultJpegQuality) })}
           </label>
           <input
             type="range"
@@ -84,7 +86,7 @@ export function PrefsDialog({ open, prefs, onSave, onClose }: Props) {
 
         {/* Grid size */}
         <div className="flex items-center gap-3">
-          <span className="text-slate-300 text-sm w-24 shrink-0">Grid size</span>
+          <span className="text-slate-300 text-sm w-24 shrink-0">{t('pref.grid')}</span>
           <select
             value={local.gridSize}
             onChange={(e) => setLocal((p) => ({ ...p, gridSize: Number(e.target.value) }))}
@@ -98,24 +100,24 @@ export function PrefsDialog({ open, prefs, onSave, onClose }: Props) {
 
         {/* Clear recent files */}
         <div className="flex items-center gap-3">
-          <span className="text-slate-300 text-sm flex-1">Recent files</span>
+          <span className="text-slate-300 text-sm flex-1">{t('pref.recent')}</span>
           <button
             onClick={() => clearRecentFiles()}
             className="toolbar-btn px-3 py-1 text-xs text-red-400 hover:text-red-300"
           >
-            Clear
+            {t('pref.clear')}
           </button>
         </div>
 
         <div className="flex gap-2 justify-end mt-1">
           <button onClick={onClose} className="toolbar-btn px-4 py-1.5 text-sm">
-            Cancel
+            {t('pref.cancel')}
           </button>
           <button
             onClick={handleSave}
             className="toolbar-btn toolbar-btn--primary px-4 py-1.5 text-sm"
           >
-            Save
+            {t('pref.save')}
           </button>
         </div>
       </div>

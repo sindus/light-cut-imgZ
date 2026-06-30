@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CropOverlay } from './CropOverlay'
 import type { CropRect, EditorMode, ImageMeta } from '../types'
+import { useT } from '../lib/locale'
 
 interface PickedColor {
   r: number
@@ -53,6 +54,7 @@ export function Canvas({
   onColorPickConfirm,
   onImageRef,
 }: CanvasProps) {
+  const t = useT()
   const [loadingPath, setLoadingPath] = useState<string | null>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const magnifierRef = useRef<HTMLCanvasElement | null>(null)
@@ -236,13 +238,13 @@ export function Canvas({
             <circle cx="8.5" cy="8.5" r="1.5" />
             <polyline points="21 15 16 10 5 21" />
           </svg>
-          <p className="text-sm">Open an image to get started</p>
-          <p className="text-xs opacity-50">Click here or use File → Open</p>
+          <p className="text-sm">{t('canvas.open')}</p>
+          <p className="text-xs opacity-50">{t('canvas.hint')}</p>
         </div>
 
         {recentFiles.length > 0 && (
           <div className="mt-2 w-72">
-            <p className="text-xs text-slate-600 mb-2 text-center uppercase tracking-wider">Recent</p>
+            <p className="text-xs text-slate-600 mb-2 text-center uppercase tracking-wider">{t('canvas.recent')}</p>
             <div className="flex flex-col gap-0.5">
               {recentFiles.map((path) => {
                 const loading = loadingPath === path

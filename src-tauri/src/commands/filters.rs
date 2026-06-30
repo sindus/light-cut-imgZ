@@ -269,6 +269,7 @@ pub fn filter_posterize(
 
 /// Map shadows to one colour and highlights to another.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub fn filter_duotone(
     state: State<'_, AppState>,
     tab_id: String,

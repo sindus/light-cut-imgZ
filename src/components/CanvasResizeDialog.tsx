@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Anchor } from '../lib/tauri'
+import { useT } from '../lib/locale'
 
 interface Props {
   open: boolean
@@ -79,6 +80,8 @@ export function CanvasResizeDialog({
     if (lockRatio) setWidth(Math.max(originalWidth, Math.round(h * ratio)))
   }
 
+  const t = useT()
+
   if (!open) return null
 
   const valid =
@@ -103,16 +106,16 @@ export function CanvasResizeDialog({
         className="bg-slate-800 border border-slate-600 rounded-lg shadow-2xl p-6 w-96 flex flex-col gap-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-white font-semibold text-base">Canvas resize</h2>
+        <h2 className="text-white font-semibold text-base">{t('cvs.title')}</h2>
         <p className="text-slate-400 text-xs -mt-2">
-          Original: {originalWidth} × {originalHeight} px — new size must be ≥ original
+          {t('cvs.hint', { w: String(originalWidth), h: String(originalHeight) })}
         </p>
 
         {/* Size inputs */}
         <div className="flex gap-2 items-center">
           <div className="flex flex-col gap-3 flex-1">
             <label className="flex items-center justify-between gap-3">
-              <span className="text-slate-300 text-sm w-16">Width</span>
+              <span className="text-slate-300 text-sm w-16">{t('cvs.width')}</span>
               <div className="flex items-center gap-1 flex-1">
                 <input
                   type="number"
@@ -125,7 +128,7 @@ export function CanvasResizeDialog({
               </div>
             </label>
             <label className="flex items-center justify-between gap-3">
-              <span className="text-slate-300 text-sm w-16">Height</span>
+              <span className="text-slate-300 text-sm w-16">{t('cvs.height')}</span>
               <div className="flex items-center gap-1 flex-1">
                 <input
                   type="number"
@@ -143,7 +146,7 @@ export function CanvasResizeDialog({
           <button
             type="button"
             onClick={() => setLockRatio((l) => !l)}
-            title={lockRatio ? 'Unlock ratio' : 'Lock ratio'}
+            title={lockRatio ? t('cvs.unlock') : t('cvs.lock')}
             className={`w-7 h-7 rounded flex items-center justify-center transition-colors shrink-0
               ${lockRatio ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
           >
@@ -153,7 +156,7 @@ export function CanvasResizeDialog({
 
         {/* Anchor picker */}
         <div className="flex items-center gap-4">
-          <span className="text-slate-300 text-sm w-16 shrink-0">Anchor</span>
+          <span className="text-slate-300 text-sm w-16 shrink-0">{t('cvs.anchor')}</span>
           <div className="grid grid-cols-3 gap-1">
             {ANCHORS.map((row) =>
               row.map((a) => (
@@ -176,7 +179,7 @@ export function CanvasResizeDialog({
 
         {/* Fill color */}
         <div className="flex items-center gap-4">
-          <span className="text-slate-300 text-sm w-16 shrink-0">Fill</span>
+          <span className="text-slate-300 text-sm w-16 shrink-0">{t('cvs.fill')}</span>
           <input
             type="color"
             value={fillHex}
@@ -191,20 +194,20 @@ export function CanvasResizeDialog({
               onChange={(e) => setTransparent(e.target.checked)}
               className="accent-indigo-500"
             />
-            Transparent
+            {t('cvs.transparent')}
           </label>
         </div>
 
         <div className="flex gap-2 justify-end mt-1">
           <button onClick={onClose} className="toolbar-btn px-4 py-1.5 text-sm">
-            Cancel
+            {t('cvs.cancel')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={!valid || isLoading}
             className="toolbar-btn toolbar-btn--primary px-4 py-1.5 text-sm"
           >
-            {isLoading ? 'Applying…' : 'Apply'}
+            {isLoading ? t('cvs.applying') : t('cvs.apply')}
           </button>
         </div>
       </div>

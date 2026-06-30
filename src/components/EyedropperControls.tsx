@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useT } from '../lib/locale'
 
 interface PickedColor {
   r: number
@@ -59,6 +60,7 @@ function CopyChip({
 }
 
 export function EyedropperControls({ color, onClose }: EyedropperControlsProps) {
+  const t = useT()
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -75,7 +77,7 @@ export function EyedropperControls({ color, onClose }: EyedropperControlsProps) 
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700 shrink-0">
-      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider shrink-0">Color Picker</span>
+      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider shrink-0">{t('eye.title')}</span>
 
       {color && hex ? (
         <>
@@ -111,16 +113,16 @@ export function EyedropperControls({ color, onClose }: EyedropperControlsProps) 
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            {copiedLabel} copied
+            {t('eye.copied', { label: copiedLabel ?? '' })}
           </div>
         </>
       ) : (
-        <span className="text-xs text-slate-600 ml-2">Hover over the image to pick a color · click to confirm</span>
+        <span className="text-xs text-slate-600 ml-2">{t('eye.hint')}</span>
       )}
 
       <div className="flex-1" />
       <button onClick={onClose} className="toolbar-btn">
-        Done
+        {t('eye.done')}
       </button>
     </div>
   )

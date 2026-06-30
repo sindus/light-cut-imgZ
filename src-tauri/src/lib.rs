@@ -100,12 +100,20 @@ pub fn run() {
                 MenuItemBuilder::with_id("check-updates", "Check for Updates…").build(app)?;
             let about_item =
                 MenuItemBuilder::with_id("about", "About light-cut-imgZ").build(app)?;
+            let lang_en_item = MenuItemBuilder::with_id("lang-en", "English").build(app)?;
+            let lang_fr_item = MenuItemBuilder::with_id("lang-fr", "Français").build(app)?;
+            let lang_submenu = SubmenuBuilder::new(app, "Language")
+                .item(&lang_en_item)
+                .item(&lang_fr_item)
+                .build()?;
             let file_submenu = SubmenuBuilder::new(app, "File")
                 .item(&open_item)
                 .separator()
                 .item(&close_tab_item)
                 .item(&close_others_item)
                 .item(&close_all_item)
+                .separator()
+                .item(&lang_submenu)
                 .separator()
                 .item(&check_updates_item)
                 .item(&about_item)
@@ -150,6 +158,12 @@ pub fn run() {
             }
             "about" => {
                 app.emit("show-about", env!("CARGO_PKG_VERSION")).ok();
+            }
+            "lang-en" => {
+                app.emit("menu-set-language", "en").ok();
+            }
+            "lang-fr" => {
+                app.emit("menu-set-language", "fr").ok();
             }
             "check-updates" => {
                 app.opener()

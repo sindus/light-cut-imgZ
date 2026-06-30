@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ExportFormat } from '../types'
+import { useT } from '../lib/locale'
 
 interface ExportDialogProps {
   open: boolean
@@ -19,6 +20,7 @@ const FORMATS: Array<{ value: ExportFormat; label: string; supportsQuality: bool
 ]
 
 export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, onExport, onClose }: ExportDialogProps) {
+  const t = useT()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [format, setFormat] = useState<ExportFormat>(defaultFormat ?? 'png')
   const [quality, setQuality] = useState(defaultQuality ?? 90)
@@ -46,12 +48,12 @@ export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, o
       className="rounded-lg bg-slate-800 text-slate-100 border border-slate-600 p-0 min-w-80 backdrop:bg-black/60"
     >
       <div className="px-5 py-4 border-b border-slate-700">
-        <h2 className="text-base font-semibold">Export Image</h2>
+        <h2 className="text-base font-semibold">{t('exp.title')}</h2>
       </div>
 
       <div className="px-5 py-4 flex flex-col gap-4">
         <fieldset>
-          <legend className="text-xs text-slate-400 uppercase tracking-wider mb-2">Format</legend>
+          <legend className="text-xs text-slate-400 uppercase tracking-wider mb-2">{t('exp.format')}</legend>
           <div className="grid grid-cols-5 gap-1.5">
             {FORMATS.map((f) => (
               <label
@@ -79,7 +81,7 @@ export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, o
         {selectedFormat.supportsQuality && (
           <div>
             <label className="text-xs text-slate-400 uppercase tracking-wider block mb-2">
-              Quality: {quality}%
+              {t('exp.quality', { n: String(quality) })}
             </label>
             <input
               type="range"
@@ -101,7 +103,7 @@ export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, o
           disabled={isLoading}
           className="px-4 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
         >
-          Cancel
+          {t('exp.cancel')}
         </button>
         <button
           onClick={handleExport}
@@ -109,7 +111,7 @@ export function ExportDialog({ open, isLoading, defaultFormat, defaultQuality, o
           className="px-4 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors disabled:opacity-50"
           data-testid="export-button"
         >
-          {isLoading ? 'Exporting…' : 'Export'}
+          {isLoading ? t('exp.exporting') : t('exp.export')}
         </button>
       </div>
     </dialog>

@@ -1,4 +1,5 @@
 import type { EditorMode } from '../types'
+import { useT } from '../lib/locale'
 
 interface ToolbarProps {
   hasImage: boolean
@@ -88,6 +89,7 @@ export function Toolbar({
   onPrefsOpen,
   onExportOpen,
 }: ToolbarProps) {
+  const t = useT()
   const disabled = !hasImage || isLoading
 
   return (
@@ -96,43 +98,43 @@ export function Toolbar({
       <span className="text-xs font-bold text-indigo-400 mb-2 mt-1 tracking-tight">Z</span>
 
       {/* Transform tools */}
-      <SidebarBtn onClick={onCropMode} disabled={disabled} active={mode === 'cropping'} title="Crop" label="Crop" aria-pressed={mode === 'cropping'}>
+      <SidebarBtn onClick={onCropMode} disabled={disabled} active={mode === 'cropping'} title={t('tooltip.crop')} label={t('toolbar.crop')} aria-pressed={mode === 'cropping'}>
         <CropIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onRotateMode} disabled={disabled} active={mode === 'rotating'} title="Rotate" label="Rotation" aria-pressed={mode === 'rotating'}>
+      <SidebarBtn onClick={onRotateMode} disabled={disabled} active={mode === 'rotating'} title={t('tooltip.rotate')} label={t('toolbar.rotate')} aria-pressed={mode === 'rotating'}>
         <RotateIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onFlipOpen} disabled={disabled} active={showFlipBar} title="Flip" label="Flip" aria-label="Flip" aria-pressed={showFlipBar}>
+      <SidebarBtn onClick={onFlipOpen} disabled={disabled} active={showFlipBar} title={t('tooltip.flip')} label={t('toolbar.flip')} aria-label={t('tooltip.flip')} aria-pressed={showFlipBar}>
         <FlipIcon />
       </SidebarBtn>
 
       <Sep />
 
-      <SidebarBtn onClick={onResizeOpen} disabled={disabled} title="Resize image" label="Resize" aria-label="Resize">
+      <SidebarBtn onClick={onResizeOpen} disabled={disabled} title={t('tooltip.resize')} label={t('toolbar.resize')} aria-label={t('tooltip.resize')}>
         <ResizeIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onCanvasResizeOpen} disabled={disabled} title="Canvas resize" label="Canvas" aria-label="Canvas resize">
+      <SidebarBtn onClick={onCanvasResizeOpen} disabled={disabled} title={t('tooltip.canvas')} label={t('toolbar.canvas')} aria-label={t('tooltip.canvas')}>
         <CanvasResizeIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onEyedropperMode} disabled={disabled} active={mode === 'eyedropper'} title="Color picker" label="Pipette" aria-label="Color picker" aria-pressed={mode === 'eyedropper'}>
+      <SidebarBtn onClick={onEyedropperMode} disabled={disabled} active={mode === 'eyedropper'} title={t('tooltip.picker')} label={t('toolbar.picker')} aria-label={t('tooltip.picker')} aria-pressed={mode === 'eyedropper'}>
         <EyedropperIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onAdjustmentsOpen} disabled={disabled} active={showAdjustments} title="Adjustments" label="Réglages" aria-label="Adjustments" aria-pressed={showAdjustments}>
+      <SidebarBtn onClick={onAdjustmentsOpen} disabled={disabled} active={showAdjustments} title={t('tooltip.adjust')} label={t('toolbar.adjust')} aria-label={t('tooltip.adjust')} aria-pressed={showAdjustments}>
         <AdjustmentsIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onFiltersOpen} disabled={disabled} active={showFilters} title="Filtres" label="Filtres" aria-label="Filtres" aria-pressed={showFilters}>
+      <SidebarBtn onClick={onFiltersOpen} disabled={disabled} active={showFilters} title={t('tooltip.filters')} label={t('toolbar.filters')} aria-label={t('tooltip.filters')} aria-pressed={showFilters}>
         <FiltersIcon />
       </SidebarBtn>
 
       <Sep />
 
-      <SidebarBtn onClick={onCopy} disabled={disabled} title="Copy to clipboard" label="Copier" aria-label="Copy to clipboard">
+      <SidebarBtn onClick={onCopy} disabled={disabled} title={t('tooltip.copy')} label={t('toolbar.copy')} aria-label={t('tooltip.copy')}>
         <CopyIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onToggleGrid} disabled={!hasImage} active={showGrid} title="Toggle grid" label="Grille" aria-label="Toggle grid" aria-pressed={showGrid}>
+      <SidebarBtn onClick={onToggleGrid} disabled={!hasImage} active={showGrid} title={t('tooltip.grid')} label={t('toolbar.grid')} aria-label={t('tooltip.grid')} aria-pressed={showGrid}>
         <GridIcon />
       </SidebarBtn>
-      <SidebarBtn onClick={onToggleExif} disabled={!hasImage} active={showExif} title="EXIF metadata" label="EXIF" aria-label="EXIF metadata" aria-pressed={showExif}>
+      <SidebarBtn onClick={onToggleExif} disabled={!hasImage} active={showExif} title={t('tooltip.exif')} label={t('toolbar.exif')} aria-label={t('tooltip.exif')} aria-pressed={showExif}>
         <InfoIcon />
       </SidebarBtn>
 
@@ -140,11 +142,11 @@ export function Toolbar({
 
       <Sep />
 
-      <SidebarBtn onClick={onPrefsOpen} title="Preferences" label="Préfs" aria-label="Preferences">
+      <SidebarBtn onClick={onPrefsOpen} title={t('tooltip.prefs')} label={t('toolbar.prefs')} aria-label={t('tooltip.prefs')}>
         <GearIcon />
       </SidebarBtn>
 
-      <SidebarBtn onClick={onExportOpen} disabled={disabled} primary title="Export" label="Export" aria-label="Export">
+      <SidebarBtn onClick={onExportOpen} disabled={disabled} primary title={t('tooltip.export')} label={t('toolbar.export')} aria-label={t('tooltip.export')}>
         <ExportIcon />
       </SidebarBtn>
     </aside>

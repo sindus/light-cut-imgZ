@@ -34,14 +34,14 @@ describe('FiltersPanel', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('renders the Filtres header', () => {
+  it('renders the Filters header', () => {
     renderPanel()
-    expect(screen.getByText('Filtres')).toBeInTheDocument()
+    expect(screen.getByText('Filters')).toBeInTheDocument()
   })
 
   it('renders all 11 preset labels', () => {
     renderPanel()
-    ;['N&B', 'Sépia', 'Négatif', 'Lomo', 'Vintage', 'Cool', 'Warm', 'Fade', 'Drama', 'Cross', 'Sketch'].forEach((name) =>
+    ;['B&W', 'Sépia', 'Invert', 'Lomo', 'Vintage', 'Cool', 'Warm', 'Fade', 'Drama', 'Cross', 'Sketch'].forEach((name) =>
       expect(screen.getAllByText(name).length).toBeGreaterThanOrEqual(1),
     )
   })
@@ -64,11 +64,11 @@ describe('FiltersPanel', () => {
 
   it('renders all parametric section titles', () => {
     renderPanel()
-    ;['Mélangeur N&B', 'Vignette', 'Grain', 'Pixeliser', 'Postérisé', 'Flou',
-      'Cool / Warm', 'Fondu', 'Cross-process', 'Duotone',
+    ;['B&W Mixer', 'Vignette', 'Grain', 'Pixelate', 'Posterize', 'Blur',
+      'Cool / Warm', 'Cross-process', 'Duotone',
     ].forEach((title) => expect(screen.getByText(title)).toBeInTheDocument())
-    // Sépia, Lomo, Vintage, Drama also appear as preset labels — at least 2 occurrences each
-    ;['Sépia', 'Lomo', 'Vintage', 'Drama'].forEach((title) =>
+    // Sépia, Lomo, Vintage, Drama, Fade also appear as preset labels — at least 2 occurrences each
+    ;['Sépia', 'Lomo', 'Vintage', 'Drama', 'Fade'].forEach((title) =>
       expect(screen.getAllByText(title).length).toBeGreaterThanOrEqual(2),
     )
   })
@@ -89,8 +89,8 @@ describe('FiltersPanel', () => {
   it('only one section can be open at a time', async () => {
     renderPanel()
     await userEvent.click(screen.getByText('Grain'))
-    await userEvent.click(screen.getByText('Pixeliser'))
-    // Grain collapses, only Pixeliser slider visible
+    await userEvent.click(screen.getByText('Pixelate'))
+    // Grain collapses, only Pixelate slider visible
     expect(screen.getAllByRole('slider')).toHaveLength(1)
   })
 
@@ -98,20 +98,20 @@ describe('FiltersPanel', () => {
 
   it('hovering a preset calls onPreviewFilterChange with CSS', async () => {
     renderPanel()
-    await userEvent.hover(screen.getByTitle('N&B'))
+    await userEvent.hover(screen.getByTitle('B&W'))
     expect(defaultProps.onPreviewFilterChange).toHaveBeenCalledWith('grayscale(1)')
   })
 
   it('mouse leaving the preset grid clears the preview', async () => {
     renderPanel()
-    const grid = screen.getByTitle('N&B').closest('[class*="grid"]') as HTMLElement
+    const grid = screen.getByTitle('B&W').closest('[class*="grid"]') as HTMLElement
     fireEvent.mouseLeave(grid)
     expect(defaultProps.onPreviewFilterChange).toHaveBeenCalledWith(null)
   })
 
   it('clicking the grayscale preset calls onApply with grayscale cmd', async () => {
     renderPanel()
-    await userEvent.click(screen.getByTitle('N&B'))
+    await userEvent.click(screen.getByTitle('B&W'))
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
     expect(defaultProps.onApply).toHaveBeenCalledWith({
       type: 'grayscale', rWeight: 0.299, gWeight: 0.587, bWeight: 0.114,
@@ -120,7 +120,7 @@ describe('FiltersPanel', () => {
 
   it('clicking the invert preset calls onApply with invert cmd', async () => {
     renderPanel()
-    await userEvent.click(screen.getByTitle('Négatif'))
+    await userEvent.click(screen.getByTitle('Invert'))
     await vi.waitFor(() => expect(defaultProps.onApply).toHaveBeenCalledTimes(1))
     expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'invert' })
   })
@@ -134,9 +134,9 @@ describe('FiltersPanel', () => {
 
   // ── Grayscale mixer ───────────────────────────────────────────────────────────
 
-  it('Mélangeur N&B: sliders commit with all three weights', async () => {
+  it('B&W Mixer: sliders commit with all three weights', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Mélangeur N&B'))
+    await userEvent.click(screen.getByText('B&W Mixer'))
     const [rSlider] = screen.getAllByRole('slider')
     fireEvent.change(rSlider, { target: { value: '0.5' } })
     fireEvent.pointerUp(rSlider, { target: { value: '0.5' } })
@@ -146,9 +146,9 @@ describe('FiltersPanel', () => {
     }))
   })
 
-  it('Mélangeur N&B: onChange emits grayscale CSS preview', async () => {
+  it('B&W Mixer: onChange emits grayscale CSS preview', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Mélangeur N&B'))
+    await userEvent.click(screen.getByText('B&W Mixer'))
     const [rSlider] = screen.getAllByRole('slider')
     fireEvent.change(rSlider, { target: { value: '0.8' } })
     expect(defaultProps.onPreviewFilterChange).toHaveBeenCalledWith('grayscale(1)')
@@ -193,11 +193,11 @@ describe('FiltersPanel', () => {
     }))
   })
 
-  // ── Pixeliser ─────────────────────────────────────────────────────────────────
+  // ── Pixelate ──────────────────────────────────────────────────────────────────
 
-  it('Pixeliser: commit sends size', async () => {
+  it('Pixelate: commit sends size', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Pixeliser'))
+    await userEvent.click(screen.getByText('Pixelate'))
     const [slider] = screen.getAllByRole('slider')
     fireEvent.change(slider, { target: { value: '20' } })
     fireEvent.pointerUp(slider, { target: { value: '20' } })
@@ -205,11 +205,11 @@ describe('FiltersPanel', () => {
     expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'pixelate', size: 20 })
   })
 
-  // ── Postérisé ─────────────────────────────────────────────────────────────────
+  // ── Posterize ─────────────────────────────────────────────────────────────────
 
-  it('Postérisé: commit sends levels', async () => {
+  it('Posterize: commit sends levels', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Postérisé'))
+    await userEvent.click(screen.getByText('Posterize'))
     const [slider] = screen.getAllByRole('slider')
     fireEvent.change(slider, { target: { value: '6' } })
     fireEvent.pointerUp(slider, { target: { value: '6' } })
@@ -217,17 +217,17 @@ describe('FiltersPanel', () => {
     expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'posterize', levels: 6 })
   })
 
-  // ── Flou ──────────────────────────────────────────────────────────────────────
+  // ── Blur ──────────────────────────────────────────────────────────────────────
 
-  it('Flou: gaussian is the default type', async () => {
+  it('Blur: gaussian is the default type', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Flou'))
-    expect(screen.getByText('Gaussien').closest('button')).toHaveClass('bg-indigo-600')
+    await userEvent.click(screen.getByText('Blur'))
+    expect(screen.getByText('Gaussian').closest('button')).toHaveClass('bg-indigo-600')
   })
 
-  it('Flou gaussien: commit sends blur-gaussian', async () => {
+  it('Blur gaussian: commit sends blur-gaussian', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Flou'))
+    await userEvent.click(screen.getByText('Blur'))
     const [slider] = screen.getAllByRole('slider')
     fireEvent.change(slider, { target: { value: '5' } })
     fireEvent.pointerUp(slider, { target: { value: '5' } })
@@ -235,17 +235,17 @@ describe('FiltersPanel', () => {
     expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'blur-gaussian', radius: 5 })
   })
 
-  it('Flou: switching to motion shows angle and distance sliders', async () => {
+  it('Blur: switching to motion shows angle and distance sliders', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Flou'))
-    await userEvent.click(screen.getByText('Mouvement'))
+    await userEvent.click(screen.getByText('Blur'))
+    await userEvent.click(screen.getByText('Motion'))
     expect(screen.getAllByRole('slider')).toHaveLength(2)
   })
 
-  it('Flou motion: commit sends blur-motion', async () => {
+  it('Blur motion: commit sends blur-motion', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Flou'))
-    await userEvent.click(screen.getByText('Mouvement'))
+    await userEvent.click(screen.getByText('Blur'))
+    await userEvent.click(screen.getByText('Motion'))
     const [angleSlider, distSlider] = screen.getAllByRole('slider')
     fireEvent.change(angleSlider, { target: { value: '45' } })
     fireEvent.change(distSlider, { target: { value: '15' } })
@@ -254,16 +254,16 @@ describe('FiltersPanel', () => {
     expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'blur-motion', angle: 45, distance: 15 })
   })
 
-  it('Flou: switching to radial shows strength and samples sliders', async () => {
+  it('Blur: switching to radial shows strength and samples sliders', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Flou'))
+    await userEvent.click(screen.getByText('Blur'))
     await userEvent.click(screen.getByText('Radial'))
     expect(screen.getAllByRole('slider')).toHaveLength(2)
   })
 
-  it('Flou radial: commit sends blur-radial', async () => {
+  it('Blur radial: commit sends blur-radial', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Flou'))
+    await userEvent.click(screen.getByText('Blur'))
     await userEvent.click(screen.getByText('Radial'))
     const [strengthSlider] = screen.getAllByRole('slider')
     fireEvent.change(strengthSlider, { target: { value: '0.5' } })
@@ -327,9 +327,10 @@ describe('FiltersPanel', () => {
     expect(defaultProps.onApply).toHaveBeenCalledWith({ type: 'warm', intensity: 0.8 })
   })
 
-  it('Fondu section: commit sends fade with intensity', async () => {
+  it('Fade section: commit sends fade with intensity', async () => {
     renderPanel()
-    await userEvent.click(screen.getByText('Fondu'))
+    // 'Fade' appears twice: preset label (index 0) and section title (index 1)
+    await userEvent.click(screen.getAllByText('Fade')[1])
     const [slider] = screen.getAllByRole('slider')
     fireEvent.change(slider, { target: { value: '0.3' } })
     fireEvent.pointerUp(slider, { target: { value: '0.3' } })

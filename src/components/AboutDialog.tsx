@@ -1,3 +1,5 @@
+import { useT } from '../lib/locale'
+
 interface Props {
   open: boolean
   version: string
@@ -5,6 +7,7 @@ interface Props {
 }
 
 export function AboutDialog({ open, version, onClose }: Props) {
+  const t = useT()
   if (!open) return null
 
   return (
@@ -21,19 +24,19 @@ export function AboutDialog({ open, version, onClose }: Props) {
         </div>
 
         <div className="text-slate-400 text-sm text-center">
-          Fast desktop image editor
+          {t('about.tagline')}
           <br />
-          Crop · Rotate · Export
+          {t('about.features')}
         </div>
 
-        <div className="text-slate-500 text-xs">Version {version}</div>
+        <div className="text-slate-500 text-xs">{t('about.version', { v: version })}</div>
 
         <button
           onClick={onClose}
           className="mt-2 toolbar-btn px-5 py-1.5 text-sm"
           autoFocus
         >
-          Close
+          {t('about.close')}
         </button>
       </div>
     </div>

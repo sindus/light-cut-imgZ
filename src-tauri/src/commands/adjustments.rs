@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImage, Rgba};
+use image::{DynamicImage, Rgba};
 use tauri::State;
 
 use super::open::{build_meta, ImageMeta};
@@ -122,6 +122,7 @@ fn build_curve_lut(raw_points: &[[f32; 2]]) -> [u8; 256] {
     }
 
     let mut lut = [0u8; 256];
+    #[allow(clippy::needless_range_loop)]
     for i in 0..256usize {
         let x = i as f32 / 255.0;
         let k = pts
@@ -436,7 +437,7 @@ mod tests {
 
     #[test]
     fn exposure_1ev_doubles_pixel() {
-        let img = solid(100, 100, 100);
+        let _img = solid(100, 100, 100);
         let factor = (2.0f32).powf(1.0);
         assert_eq!(clamp_u8(100.0 * factor), 200);
     }

@@ -1,5 +1,7 @@
 import { listen } from '@tauri-apps/api/event'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { LangProvider } from './lib/locale'
+import type { Lang } from './lib/i18n'
 import { AboutDialog } from './components/AboutDialog'
 import { AdjustmentsPanel } from './components/AdjustmentsPanel'
 import type { AdjustmentCommand } from './components/AdjustmentsPanel'
@@ -141,6 +143,14 @@ export default function App() {
     const unlistenUndo = listen('menu-undo', () => handleUndo())
     const unlistenRedo = listen('menu-redo', () => handleRedo())
     const unlistenToggleHistory = listen('menu-toggle-history', () => setShowHistory((s) => !s))
+    const unlistenSetLanguage = listen('menu-set-language', (event) => {
+      const lang = event.payload as Lang
+      setPrefs((p) => {
+        const updated = { ...p, language: lang }
+        savePrefs(updated)
+        return updated
+      })
+    })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const unlistenDrop = listen('tauri://drag-drop', (event: any) => {
       const paths: string[] = event.payload?.paths ?? event.payload ?? []
@@ -156,6 +166,7 @@ export default function App() {
       unlistenUndo.then((fn) => fn())
       unlistenRedo.then((fn) => fn())
       unlistenToggleHistory.then((fn) => fn())
+      unlistenSetLanguage.then((fn) => fn())
       unlistenDrop.then((fn) => fn())
     }
   }, [handleOpen, handleCloseTab, handleCloseOtherTabs, handleCloseAllTabs, handleUndo, handleRedo, handleOpenByPaths])
@@ -283,6 +294,7 @@ export default function App() {
     : null
 
   return (
+    <LangProvider lang={prefs.language ?? 'en'}>
     <div className="flex h-screen overflow-hidden">
       {/* Left sidebar */}
       <Toolbar
@@ -477,5 +489,6 @@ export default function App() {
         onClose={() => setPrefsOpen(false)}
       />
     </div>
+    </LangProvider>
   )
 }

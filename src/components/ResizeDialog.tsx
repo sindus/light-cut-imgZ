@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useT } from '../lib/locale'
 
 interface Props {
   open: boolean
@@ -29,6 +30,8 @@ export function ResizeDialog({
     }
   }, [open, originalWidth, originalHeight])
 
+  const t = useT()
+
   if (!open) return null
 
   const ratio = originalWidth / originalHeight
@@ -54,15 +57,15 @@ export function ResizeDialog({
         className="bg-slate-800 border border-slate-600 rounded-lg shadow-2xl p-6 w-80 flex flex-col gap-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-white font-semibold text-base">Resize image</h2>
+        <h2 className="text-white font-semibold text-base">{t('rsz.title')}</h2>
 
         <p className="text-slate-400 text-xs -mt-2">
-          Original: {originalWidth} × {originalHeight} px
+          {t('rsz.original', { w: String(originalWidth), h: String(originalHeight) })}
         </p>
 
         <div className="flex flex-col gap-3">
           <label className="flex items-center justify-between gap-3">
-            <span className="text-slate-300 text-sm w-16">Width</span>
+            <span className="text-slate-300 text-sm w-16">{t('rsz.width')}</span>
             <div className="flex items-center gap-1 flex-1">
               <input
                 type="number"
@@ -81,15 +84,15 @@ export function ResizeDialog({
               onClick={() => setLockRatio((v) => !v)}
               className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors
                 ${lockRatio ? 'text-indigo-400 bg-indigo-950/50' : 'text-slate-500 hover:text-slate-300'}`}
-              title={lockRatio ? 'Ratio locked' : 'Ratio unlocked'}
+              title={lockRatio ? t('rsz.locked') : t('rsz.free')}
             >
               {lockRatio ? <LockIcon /> : <UnlockIcon />}
-              {lockRatio ? 'Ratio locked' : 'Free'}
+              {lockRatio ? t('rsz.locked') : t('rsz.free')}
             </button>
           </div>
 
           <label className="flex items-center justify-between gap-3">
-            <span className="text-slate-300 text-sm w-16">Height</span>
+            <span className="text-slate-300 text-sm w-16">{t('rsz.height')}</span>
             <div className="flex items-center gap-1 flex-1">
               <input
                 type="number"
@@ -108,14 +111,14 @@ export function ResizeDialog({
             onClick={onClose}
             className="toolbar-btn px-4 py-1.5 text-sm"
           >
-            Cancel
+            {t('rsz.cancel')}
           </button>
           <button
             onClick={() => valid && onResize(width, height)}
             disabled={!valid || isLoading}
             className="toolbar-btn toolbar-btn--primary px-4 py-1.5 text-sm"
           >
-            {isLoading ? 'Resizing…' : 'Resize'}
+            {isLoading ? t('rsz.resizing') : t('rsz.resize')}
           </button>
         </div>
       </div>

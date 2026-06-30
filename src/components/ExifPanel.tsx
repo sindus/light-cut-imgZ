@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ExifField } from '../lib/tauri'
+import { useT } from '../lib/locale'
 
 interface Props {
   tabId: string | null
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
+  const t = useT()
   const [hidden, setHidden] = useState<Set<string>>(new Set())
   const [stripping, setStripping] = useState(false)
 
@@ -37,7 +39,7 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
   if (isLoading) {
     return (
       <div className="w-56 border-l border-slate-700 bg-slate-900 flex items-center justify-center text-slate-500 text-xs">
-        Loading…
+        {t('exif.loading')}
       </div>
     )
   }
@@ -45,7 +47,7 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
   if (fields.length === 0) {
     return (
       <div className="w-56 border-l border-slate-700 bg-slate-900 flex items-center justify-center text-slate-500 text-xs px-4 text-center">
-        No EXIF data
+        {t('exif.empty')}
       </div>
     )
   }
@@ -59,10 +61,10 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex-1">EXIF</span>
         <button
           onClick={allHidden ? showAll : hideAll}
-          title={allHidden ? 'Show all' : 'Hide all'}
+          title={allHidden ? t('exif.showall') : t('exif.hideall')}
           className="text-slate-500 hover:text-slate-300 text-xs px-1 transition-colors"
         >
-          {allHidden ? 'Show all' : 'Hide all'}
+          {allHidden ? t('exif.showall') : t('exif.hideall')}
         </button>
       </div>
 
@@ -86,7 +88,7 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
               </div>
               <button
                 onClick={() => toggleHide(f.tag)}
-                title={isHidden ? 'Restore' : 'Mark for removal'}
+                title={isHidden ? t('exif.restore') : t('exif.mark')}
                 className="shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all text-xs w-4 h-4 flex items-center justify-center"
               >
                 {isHidden ? '↩' : '×'}
@@ -99,14 +101,14 @@ export function ExifPanel({ tabId, fields, isLoading, onStrip }: Props) {
       {/* Footer */}
       <div className="border-t border-slate-700 px-3 py-2 flex flex-col gap-1.5">
         <p className="text-slate-500 text-xs leading-snug">
-          JPEG: lossless removal · Other formats: re-encoded
+          {t('exif.lossless')}
         </p>
         <button
           onClick={handleStrip}
           disabled={!tabId || stripping}
           className="toolbar-btn toolbar-btn--primary w-full py-1.5 text-xs justify-center"
         >
-          {stripping ? 'Saving…' : 'Save without EXIF…'}
+          {stripping ? t('exif.saving') : t('exif.strip')}
         </button>
       </div>
     </div>

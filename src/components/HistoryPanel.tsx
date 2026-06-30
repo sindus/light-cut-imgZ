@@ -1,4 +1,5 @@
 import type { HistoryEntry } from '../types'
+import { useT } from '../lib/locale'
 
 interface HistoryPanelProps {
   history: HistoryEntry[]
@@ -19,18 +20,19 @@ export function HistoryPanel({
   onRedo,
   isLoading,
 }: HistoryPanelProps) {
+  const t = useT()
   return (
     <aside className="flex flex-col w-44 bg-slate-900 border-l border-slate-700 shrink-0">
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          History
+          {t('hist.header')}
         </span>
         <div className="flex gap-1">
           <button
             onClick={onUndo}
             disabled={!canUndo || isLoading}
             className="toolbar-btn p-1"
-            title="Undo (Ctrl+Z)"
+            title={t('hist.undo')}
             aria-label="Undo"
           >
             <UndoIcon />
@@ -39,7 +41,7 @@ export function HistoryPanel({
             onClick={onRedo}
             disabled={!canRedo || isLoading}
             className="toolbar-btn p-1"
-            title="Redo (Ctrl+Y)"
+            title={t('hist.redo')}
             aria-label="Redo"
           >
             <RedoIcon />
@@ -49,7 +51,7 @@ export function HistoryPanel({
 
       <div className="flex-1 overflow-y-auto py-1">
         {history.length === 0 ? (
-          <p className="text-xs text-slate-600 px-3 py-2 italic">No actions yet</p>
+          <p className="text-xs text-slate-600 px-3 py-2 italic">{t('hist.empty')}</p>
         ) : (
           <ul>
             {history.map((entry, i) => {

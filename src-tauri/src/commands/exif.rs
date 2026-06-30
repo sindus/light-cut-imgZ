@@ -80,7 +80,7 @@ pub async fn strip_exif(
 
     if (ext == "jpg" || ext == "jpeg") && source_path.is_some() {
         // Lossless EXIF removal for JPEG
-        let data = std::fs::read(source_path.as_ref().unwrap()).map_err(|e| e.to_string())?;
+        let data = std::fs::read(source_path.as_deref().ok_or("No source path")?).map_err(|e| e.to_string())?;
         let mut jpeg = img_parts::jpeg::Jpeg::from_bytes(data.into())
             .map_err(|e| e.to_string())?;
         jpeg.set_exif(None);
