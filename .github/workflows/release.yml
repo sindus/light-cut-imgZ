@@ -6,7 +6,59 @@ on:
       - 'v*.*.*'
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libxdo-dev
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint frontend (ESLint)
+        run: npm run lint
+
+      - name: Type-check frontend
+        run: npx tsc --noEmit
+
+      - name: Test frontend (Vitest)
+        run: npm run test:run
+
+      - name: Lint Rust (Clippy)
+        working-directory: src-tauri
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test Rust
+        working-directory: src-tauri
+        run: cargo test
+
   release:
+    needs: test
     permissions:
       contents: write
     strategy:
@@ -49,7 +101,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libappindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            libxdo-dev
 
       - name: Install dependencies
         run: npm ci
