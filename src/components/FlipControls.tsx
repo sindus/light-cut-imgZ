@@ -1,3 +1,5 @@
+import { useT } from '../lib/locale'
+
 interface FlipControlsProps {
   isLoading: boolean
   onFlipH: () => void
@@ -6,9 +8,10 @@ interface FlipControlsProps {
 }
 
 export function FlipControls({ isLoading, onFlipH, onFlipV, onClose }: FlipControlsProps) {
+  const t = useT()
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-slate-800 border-b border-slate-700 shrink-0">
-      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Flip</span>
+      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{t('toolbar.flip')}</span>
 
       <button
         onClick={onFlipH}
@@ -17,7 +20,7 @@ export function FlipControls({ isLoading, onFlipH, onFlipV, onClose }: FlipContr
         aria-label="Flip horizontal"
       >
         <FlipHIcon />
-        Horizontal
+        {t('flip.horizontal')}
       </button>
 
       <button
@@ -27,13 +30,13 @@ export function FlipControls({ isLoading, onFlipH, onFlipV, onClose }: FlipContr
         aria-label="Flip vertical"
       >
         <FlipVIcon />
-        Vertical
+        {t('flip.vertical')}
       </button>
 
       <div className="flex-1" />
 
       <button onClick={onClose} className="toolbar-btn">
-        Done
+        {t('flip.done')}
       </button>
     </div>
   )

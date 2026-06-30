@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ImageMeta } from '../types'
+import { useT } from '../lib/locale'
 
 export type FilterCommand =
   | { type: 'grayscale'; rWeight: number; gWeight: number; bWeight: number }
@@ -34,23 +35,23 @@ interface FiltersPanelProps {
 
 interface Preset {
   id: string
-  name: string
+  nameKey: string
   css: string
   cmd: FilterCommand
 }
 
 const PRESETS: Preset[] = [
-  { id: 'grayscale', name: 'N&B',     css: 'grayscale(1)',                                           cmd: { type: 'grayscale', rWeight: 0.299, gWeight: 0.587, bWeight: 0.114 } },
-  { id: 'sepia',     name: 'Sépia',   css: 'sepia(1)',                                               cmd: { type: 'sepia', intensity: 1.0 } },
-  { id: 'invert',    name: 'Négatif', css: 'invert(1)',                                              cmd: { type: 'invert' } },
-  { id: 'lomo',      name: 'Lomo',    css: 'saturate(1.6) contrast(1.2) brightness(0.88)',           cmd: { type: 'lomo', intensity: 1.0 } },
-  { id: 'vintage',   name: 'Vintage', css: 'sepia(0.4) contrast(0.9) brightness(1.05) saturate(0.85)', cmd: { type: 'vintage', intensity: 1.0 } },
-  { id: 'cool',      name: 'Cool',    css: 'hue-rotate(20deg) saturate(1.15) brightness(1.05)',      cmd: { type: 'cool', intensity: 1.0 } },
-  { id: 'warm',      name: 'Warm',    css: 'hue-rotate(-15deg) saturate(1.2) brightness(1.05)',      cmd: { type: 'warm', intensity: 1.0 } },
-  { id: 'fade',      name: 'Fade',    css: 'contrast(0.7) brightness(1.2) saturate(0.8)',            cmd: { type: 'fade', intensity: 1.0 } },
-  { id: 'drama',     name: 'Drama',   css: 'contrast(1.5) brightness(0.85) saturate(0.7)',           cmd: { type: 'drama', intensity: 1.0 } },
-  { id: 'cross',     name: 'Cross',   css: 'saturate(1.5) hue-rotate(15deg) contrast(1.1)',          cmd: { type: 'cross-process', intensity: 1.0 } },
-  { id: 'sketch',    name: 'Sketch',  css: 'grayscale(1) contrast(4) brightness(1.5)',               cmd: { type: 'sketch' } },
+  { id: 'grayscale', nameKey: 'fil.preset.bw',     css: 'grayscale(1)',                                           cmd: { type: 'grayscale', rWeight: 0.299, gWeight: 0.587, bWeight: 0.114 } },
+  { id: 'sepia',     nameKey: 'fil.preset.sepia',  css: 'sepia(1)',                                               cmd: { type: 'sepia', intensity: 1.0 } },
+  { id: 'invert',    nameKey: 'fil.preset.invert', css: 'invert(1)',                                              cmd: { type: 'invert' } },
+  { id: 'lomo',      nameKey: 'fil.preset.lomo',   css: 'saturate(1.6) contrast(1.2) brightness(0.88)',           cmd: { type: 'lomo', intensity: 1.0 } },
+  { id: 'vintage',   nameKey: 'fil.preset.vintage',css: 'sepia(0.4) contrast(0.9) brightness(1.05) saturate(0.85)', cmd: { type: 'vintage', intensity: 1.0 } },
+  { id: 'cool',      nameKey: 'fil.preset.cool',   css: 'hue-rotate(20deg) saturate(1.15) brightness(1.05)',      cmd: { type: 'cool', intensity: 1.0 } },
+  { id: 'warm',      nameKey: 'fil.preset.warm',   css: 'hue-rotate(-15deg) saturate(1.2) brightness(1.05)',      cmd: { type: 'warm', intensity: 1.0 } },
+  { id: 'fade',      nameKey: 'fil.preset.fade',   css: 'contrast(0.7) brightness(1.2) saturate(0.8)',            cmd: { type: 'fade', intensity: 1.0 } },
+  { id: 'drama',     nameKey: 'fil.preset.drama',  css: 'contrast(1.5) brightness(0.85) saturate(0.7)',           cmd: { type: 'drama', intensity: 1.0 } },
+  { id: 'cross',     nameKey: 'fil.preset.cross',  css: 'saturate(1.5) hue-rotate(15deg) contrast(1.1)',          cmd: { type: 'cross-process', intensity: 1.0 } },
+  { id: 'sketch',    nameKey: 'fil.preset.sketch', css: 'grayscale(1) contrast(4) brightness(1.5)',               cmd: { type: 'sketch' } },
 ]
 
 // ── Duotone presets ───────────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ function Section({ title, open, onToggle, children }: SectionProps) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilterChange }: FiltersPanelProps) {
+  const t = useT()
   const [openSection, setOpenSection] = useState<string | null>(null)
 
   // Grayscale channel mixer state
@@ -253,7 +255,7 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
       {/* Header */}
       <div className="px-3 py-2.5 border-b border-slate-700 shrink-0">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-200">Filtres</span>
+          <span className="text-sm font-semibold text-slate-200">{t('fil.header')}</span>
           {isLoading && (
             <svg className="animate-spin w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -270,69 +272,72 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
           className="grid grid-cols-3 gap-1.5 p-2"
           onMouseLeave={() => { if (!inFlightRef.current) onPreviewFilterChange(null) }}
         >
-          {PRESETS.map((preset) => (
-            <button
-              key={preset.id}
-              className="flex flex-col items-center gap-1 p-1 rounded hover:bg-slate-700/50 transition-colors group"
-              onMouseEnter={() => onPreviewFilterChange(preset.css)}
-              onClick={() => { onPreviewFilterChange(preset.css); commitToRust(preset.cmd) }}
-              title={preset.name}
-            >
-              <div className="w-full aspect-video overflow-hidden rounded-sm bg-slate-800">
-                {image ? (
-                  <img
-                    src={image.preview}
-                    alt={preset.name}
-                    className="w-full h-full object-cover"
-                    style={{ filter: preset.css, imageRendering: 'auto' }}
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-slate-700/50" />
-                )}
-              </div>
-              <span className="text-[10px] text-slate-400 group-hover:text-slate-200 transition-colors leading-none">
-                {preset.name}
-              </span>
-            </button>
-          ))}
+          {PRESETS.map((preset) => {
+            const presetName = t(preset.nameKey)
+            return (
+              <button
+                key={preset.id}
+                className="flex flex-col items-center gap-1 p-1 rounded hover:bg-slate-700/50 transition-colors group"
+                onMouseEnter={() => onPreviewFilterChange(preset.css)}
+                onClick={() => { onPreviewFilterChange(preset.css); commitToRust(preset.cmd) }}
+                title={presetName}
+              >
+                <div className="w-full aspect-video overflow-hidden rounded-sm bg-slate-800">
+                  {image ? (
+                    <img
+                      src={image.preview}
+                      alt={presetName}
+                      className="w-full h-full object-cover"
+                      style={{ filter: preset.css, imageRendering: 'auto' }}
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-700/50" />
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-400 group-hover:text-slate-200 transition-colors leading-none">
+                  {presetName}
+                </span>
+              </button>
+            )
+          })}
         </div>
 
         {/* Parametric sections */}
-        <Section title="Mélangeur N&B" open={openSection === 'grayscale'} onToggle={() => toggleSection('grayscale')}>
+        <Section title={t('fil.sec.bw-mixer')} open={openSection === 'grayscale'} onToggle={() => toggleSection('grayscale')}>
           <Slider
-            label="Rouge" value={gR} min={0} max={1} step={0.01}
+            label={t('fil.red')} value={gR} min={0} max={1} step={0.01}
             onChange={(v) => { setGR(v); gRef.current.r = v; onPreviewFilterChange('grayscale(1)') }}
             onCommit={() => commitToRust({ type: 'grayscale', rWeight: gRef.current.r, gWeight: gRef.current.g, bWeight: gRef.current.b })}
           />
           <Slider
-            label="Vert" value={gG} min={0} max={1} step={0.01}
+            label={t('fil.green')} value={gG} min={0} max={1} step={0.01}
             onChange={(v) => { setGG(v); gRef.current.g = v; onPreviewFilterChange('grayscale(1)') }}
             onCommit={() => commitToRust({ type: 'grayscale', rWeight: gRef.current.r, gWeight: gRef.current.g, bWeight: gRef.current.b })}
           />
           <Slider
-            label="Bleu" value={gB} min={0} max={1} step={0.01}
+            label={t('fil.blue')} value={gB} min={0} max={1} step={0.01}
             onChange={(v) => { setGB(v); gRef.current.b = v; onPreviewFilterChange('grayscale(1)') }}
             onCommit={() => commitToRust({ type: 'grayscale', rWeight: gRef.current.r, gWeight: gRef.current.g, bWeight: gRef.current.b })}
           />
         </Section>
 
-        <Section title="Vignette" open={openSection === 'vignette'} onToggle={() => toggleSection('vignette')}>
+        <Section title={t('fil.sec.vignette')} open={openSection === 'vignette'} onToggle={() => toggleSection('vignette')}>
           <Slider
-            label="Force" value={vigStrength} min={0} max={1} step={0.01}
+            label={t('fil.strength')} value={vigStrength} min={0} max={1} step={0.01}
             onChange={(v) => { setVigStrength(v); vigRef.current.strength = v }}
             onCommit={() => commitToRust({ type: 'vignette', strength: vigRef.current.strength, feather: vigRef.current.feather })}
           />
           <Slider
-            label="Douceur" value={vigFeather} min={0.05} max={1} step={0.01}
+            label={t('fil.feather')} value={vigFeather} min={0.05} max={1} step={0.01}
             onChange={(v) => { setVigFeather(v); vigRef.current.feather = v }}
             onCommit={() => commitToRust({ type: 'vignette', strength: vigRef.current.strength, feather: vigRef.current.feather })}
           />
         </Section>
 
-        <Section title="Grain" open={openSection === 'grain'} onToggle={() => toggleSection('grain')}>
+        <Section title={t('fil.sec.grain')} open={openSection === 'grain'} onToggle={() => toggleSection('grain')}>
           <Slider
-            label="Intensité" value={grainAmount} min={0} max={1} step={0.01}
+            label={t('fil.intensity')} value={grainAmount} min={0} max={1} step={0.01}
             onChange={(v) => { setGrainAmount(v); grainRef.current.amount = v }}
             onCommit={() => commitToRust({ type: 'grain', amount: grainRef.current.amount, monochrome: grainRef.current.monochrome })}
           />
@@ -349,44 +354,44 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
                   commitToRust({ type: 'grain', amount: grainRef.current.amount, monochrome: v })
                 }}
               />
-              Monochrome
+              {t('fil.monochrome')}
             </label>
           </div>
         </Section>
 
-        <Section title="Pixeliser" open={openSection === 'pixelate'} onToggle={() => toggleSection('pixelate')}>
+        <Section title={t('fil.sec.pixelate')} open={openSection === 'pixelate'} onToggle={() => toggleSection('pixelate')}>
           <Slider
-            label="Taille" value={pixelSize} min={2} max={100} step={1} unit="px"
+            label={t('fil.size')} value={pixelSize} min={2} max={100} step={1} unit="px"
             onChange={(v) => { setPixelSize(v); pixelRef.current = v }}
             onCommit={() => commitToRust({ type: 'pixelate', size: pixelRef.current })}
           />
         </Section>
 
-        <Section title="Postérisé" open={openSection === 'posterize'} onToggle={() => toggleSection('posterize')}>
+        <Section title={t('fil.sec.posterize')} open={openSection === 'posterize'} onToggle={() => toggleSection('posterize')}>
           <Slider
-            label="Niveaux" value={posterLevels} min={2} max={16} step={1}
+            label={t('fil.levels')} value={posterLevels} min={2} max={16} step={1}
             onChange={(v) => { setPosterLevels(v); posterRef.current = v }}
             onCommit={() => commitToRust({ type: 'posterize', levels: posterRef.current })}
           />
         </Section>
 
-        <Section title="Flou" open={openSection === 'blur'} onToggle={() => toggleSection('blur')}>
+        <Section title={t('fil.sec.blur')} open={openSection === 'blur'} onToggle={() => toggleSection('blur')}>
           {/* Type switcher */}
           <div className="flex gap-1 px-3 pt-1 pb-0.5">
-            {(['gaussian', 'motion', 'radial'] as const).map((t) => (
+            {(['gaussian', 'motion', 'radial'] as const).map((bt) => (
               <button
-                key={t}
-                onClick={() => { setBlurType(t); blurRef.current.type = t }}
-                className={`flex-1 text-[10px] py-1 rounded transition-colors ${blurType === t ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-slate-200'}`}
+                key={bt}
+                onClick={() => { setBlurType(bt); blurRef.current.type = bt }}
+                className={`flex-1 text-[10px] py-1 rounded transition-colors ${blurType === bt ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-slate-200'}`}
               >
-                {t === 'gaussian' ? 'Gaussien' : t === 'motion' ? 'Mouvement' : 'Radial'}
+                {t(`fil.blur.${bt}`)}
               </button>
             ))}
           </div>
 
           {blurType === 'gaussian' && (
             <Slider
-              label="Rayon" value={blurRadius} min={0.5} max={30} step={0.5} unit="px"
+              label={t('fil.radius')} value={blurRadius} min={0.5} max={30} step={0.5} unit="px"
               onChange={(v) => { setBlurRadius(v); blurRef.current.radius = v; onPreviewFilterChange(`blur(${v.toFixed(1)}px)`) }}
               onCommit={commitBlur}
             />
@@ -395,12 +400,12 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
           {blurType === 'motion' && (
             <>
               <Slider
-                label="Angle" value={blurAngle} min={0} max={360} step={1} unit="°"
+                label={t('fil.angle')} value={blurAngle} min={0} max={360} step={1} unit="°"
                 onChange={(v) => { setBlurAngle(v); blurRef.current.angle = v; onPreviewFilterChange(`blur(2px)`) }}
                 onCommit={commitBlur}
               />
               <Slider
-                label="Distance" value={blurDistance} min={1} max={50} step={1} unit="px"
+                label={t('fil.distance')} value={blurDistance} min={1} max={50} step={1} unit="px"
                 onChange={(v) => { setBlurDistance(v); blurRef.current.distance = v; onPreviewFilterChange(`blur(${(v / 5).toFixed(1)}px)`) }}
                 onCommit={commitBlur}
               />
@@ -410,12 +415,12 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
           {blurType === 'radial' && (
             <>
               <Slider
-                label="Force" value={blurStrength} min={0} max={0.95} step={0.01}
+                label={t('fil.strength')} value={blurStrength} min={0} max={0.95} step={0.01}
                 onChange={(v) => { setBlurStrength(v); blurRef.current.strength = v; onPreviewFilterChange(`blur(${(v * 5).toFixed(1)}px)`) }}
                 onCommit={commitBlur}
               />
               <Slider
-                label="Échantillons" value={blurSamples} min={4} max={32} step={1}
+                label={t('fil.samples')} value={blurSamples} min={4} max={32} step={1}
                 onChange={(v) => { setBlurSamples(v); blurRef.current.samples = v }}
                 onCommit={commitBlur}
               />
@@ -423,68 +428,68 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
           )}
         </Section>
 
-        <Section title="Sépia" open={openSection === 'sepia'} onToggle={() => toggleSection('sepia')}>
+        <Section title={t('fil.sec.sepia')} open={openSection === 'sepia'} onToggle={() => toggleSection('sepia')}>
           <Slider
-            label="Intensité" value={sepiaIntensity} min={0} max={1} step={0.01}
+            label={t('fil.intensity')} value={sepiaIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setSepiaIntensity(v); sepiaRef.current = v; onPreviewFilterChange(`sepia(${v.toFixed(2)})`) }}
             onCommit={() => commitToRust({ type: 'sepia', intensity: sepiaRef.current })}
           />
         </Section>
 
-        <Section title="Lomo" open={openSection === 'lomo'} onToggle={() => toggleSection('lomo')}>
+        <Section title={t('fil.sec.lomo')} open={openSection === 'lomo'} onToggle={() => toggleSection('lomo')}>
           <Slider
-            label="Intensité" value={lomoIntensity} min={0} max={1} step={0.01}
+            label={t('fil.intensity')} value={lomoIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setLomoIntensity(v); lomoRef.current = v; onPreviewFilterChange(`saturate(${1 + v * 0.6}) contrast(${1 + v * 0.2}) brightness(${1 - v * 0.12})`) }}
             onCommit={() => commitToRust({ type: 'lomo', intensity: lomoRef.current })}
           />
         </Section>
 
-        <Section title="Vintage" open={openSection === 'vintage'} onToggle={() => toggleSection('vintage')}>
+        <Section title={t('fil.sec.vintage')} open={openSection === 'vintage'} onToggle={() => toggleSection('vintage')}>
           <Slider
-            label="Intensité" value={vintageIntensity} min={0} max={1} step={0.01}
+            label={t('fil.intensity')} value={vintageIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setVintageIntensity(v); vintageRef.current = v; onPreviewFilterChange(`sepia(${v * 0.4}) contrast(${1 - v * 0.1}) brightness(${1 + v * 0.05})`) }}
             onCommit={() => commitToRust({ type: 'vintage', intensity: vintageRef.current })}
           />
         </Section>
 
-        <Section title="Cool / Warm" open={openSection === 'coolwarm'} onToggle={() => toggleSection('coolwarm')}>
+        <Section title={t('fil.sec.coolwarm')} open={openSection === 'coolwarm'} onToggle={() => toggleSection('coolwarm')}>
           <Slider
-            label="Cool" value={coolIntensity} min={0} max={1} step={0.01}
+            label={t('fil.preset.cool')} value={coolIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setCoolIntensity(v); coolRef.current = v; onPreviewFilterChange(`hue-rotate(${v * 20}deg) saturate(${1 + v * 0.15}) brightness(${1 + v * 0.05})`) }}
             onCommit={() => commitToRust({ type: 'cool', intensity: coolRef.current })}
           />
           <Slider
-            label="Warm" value={warmIntensity} min={0} max={1} step={0.01}
+            label={t('fil.preset.warm')} value={warmIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setWarmIntensity(v); warmRef.current = v; onPreviewFilterChange(`hue-rotate(${-v * 15}deg) saturate(${1 + v * 0.2}) brightness(${1 + v * 0.05})`) }}
             onCommit={() => commitToRust({ type: 'warm', intensity: warmRef.current })}
           />
         </Section>
 
-        <Section title="Fondu" open={openSection === 'fade'} onToggle={() => toggleSection('fade')}>
+        <Section title={t('fil.sec.fade')} open={openSection === 'fade'} onToggle={() => toggleSection('fade')}>
           <Slider
-            label="Intensité" value={fadeIntensity} min={0} max={1} step={0.01}
+            label={t('fil.intensity')} value={fadeIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setFadeIntensity(v); fadeRef.current = v; onPreviewFilterChange(`contrast(${1 - v * 0.3}) brightness(${1 + v * 0.2}) saturate(${1 - v * 0.2})`) }}
             onCommit={() => commitToRust({ type: 'fade', intensity: fadeRef.current })}
           />
         </Section>
 
-        <Section title="Drama" open={openSection === 'drama'} onToggle={() => toggleSection('drama')}>
+        <Section title={t('fil.sec.drama')} open={openSection === 'drama'} onToggle={() => toggleSection('drama')}>
           <Slider
-            label="Intensité" value={dramaIntensity} min={0} max={1} step={0.01}
+            label={t('fil.intensity')} value={dramaIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setDramaIntensity(v); dramaRef.current = v; onPreviewFilterChange(`contrast(${1 + v * 0.5}) brightness(${1 - v * 0.15}) saturate(${1 - v * 0.3})`) }}
             onCommit={() => commitToRust({ type: 'drama', intensity: dramaRef.current })}
           />
         </Section>
 
-        <Section title="Cross-process" open={openSection === 'cross'} onToggle={() => toggleSection('cross')}>
+        <Section title={t('fil.sec.cross')} open={openSection === 'cross'} onToggle={() => toggleSection('cross')}>
           <Slider
-            label="Intensité" value={crossIntensity} min={0} max={1} step={0.01}
+            label={t('fil.intensity')} value={crossIntensity} min={0} max={1} step={0.01}
             onChange={(v) => { setCrossIntensity(v); crossRef.current = v; onPreviewFilterChange(`saturate(${1 + v * 0.5}) hue-rotate(${v * 15}deg) contrast(${1 + v * 0.1})`) }}
             onCommit={() => commitToRust({ type: 'cross-process', intensity: crossRef.current })}
           />
         </Section>
 
-        <Section title="Duotone" open={openSection === 'duotone'} onToggle={() => toggleSection('duotone')}>
+        <Section title={t('fil.sec.duotone')} open={openSection === 'duotone'} onToggle={() => toggleSection('duotone')}>
           <div className="px-3 pt-1 pb-2 flex flex-col gap-1">
             {DUOTONE_PAIRS.map((pair) => (
               <button

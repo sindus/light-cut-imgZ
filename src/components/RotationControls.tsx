@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../lib/locale'
 
 interface RotationControlsProps {
   onRotate: (degrees: number) => void
@@ -7,6 +8,7 @@ interface RotationControlsProps {
 }
 
 export function RotationControls({ onRotate, onCancel, isLoading }: RotationControlsProps) {
+  const t = useT()
   const [degrees, setDegrees] = useState(0)
 
   const handleDegreeChange = (value: number) => {
@@ -15,14 +17,14 @@ export function RotationControls({ onRotate, onCancel, isLoading }: RotationCont
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-slate-800 border-t border-slate-700">
-      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Rotate</span>
+      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{t('toolbar.rotate')}</span>
 
       <button
         onClick={() => onRotate(-90)}
         disabled={isLoading}
         className="toolbar-btn"
-        title="Rotate 90° counter-clockwise"
-        aria-label="Rotate 90° counter-clockwise"
+        title={t('rot.ccw')}
+        aria-label={t('rot.ccw')}
       >
         <RotateCcwIcon />
         −90°
@@ -32,8 +34,8 @@ export function RotationControls({ onRotate, onCancel, isLoading }: RotationCont
         onClick={() => onRotate(90)}
         disabled={isLoading}
         className="toolbar-btn"
-        title="Rotate 90° clockwise"
-        aria-label="Rotate 90° clockwise"
+        title={t('rot.cw')}
+        aria-label={t('rot.cw')}
       >
         <RotateCwIcon />
         +90°
@@ -42,7 +44,7 @@ export function RotationControls({ onRotate, onCancel, isLoading }: RotationCont
       <div className="w-px h-5 bg-slate-600" />
 
       <label className="flex items-center gap-2 text-sm text-slate-300">
-        <span>Angle</span>
+        <span>{t('rot.angle')}</span>
         <input
           type="range"
           min="-180"
@@ -70,11 +72,11 @@ export function RotationControls({ onRotate, onCancel, isLoading }: RotationCont
         disabled={isLoading || degrees === 0}
         className="toolbar-btn toolbar-btn--primary"
       >
-        Apply
+        {t('rot.apply')}
       </button>
 
       <button onClick={onCancel} disabled={isLoading} className="toolbar-btn">
-        Cancel
+        {t('rot.cancel')}
       </button>
     </div>
   )

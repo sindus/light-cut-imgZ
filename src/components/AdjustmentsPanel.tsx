@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useT } from '../lib/locale'
 
 export type AdjustmentCommand =
   | { type: 'brightness-contrast'; brightness: number; contrast: number }
@@ -81,6 +82,7 @@ function CurvesEditor({
   onChange: (pts: [number, number][]) => void
   onCommit: (pts: [number, number][]) => void
 }) {
+  const t = useT()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const dragIdxRef = useRef<number | null>(null)
   const ptsRef = useRef(userPoints)
@@ -176,7 +178,7 @@ function CurvesEditor({
         onMouseUp={finalizeDrag} onMouseLeave={finalizeDrag}
         onContextMenu={handleContextMenu}
       />
-      <p className="text-xs text-slate-600">Click to add · Drag to move · Right-click to remove</p>
+      <p className="text-xs text-slate-600">{t('adj.curves-hint')}</p>
     </div>
   )
 }
@@ -247,6 +249,7 @@ const SHARPEN_DEF = { amount: 100, radius: 1.0, threshold: 0 }
 // ─── Panel ───────────────────────────────────────────────────────────────────
 
 export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterChange }: AdjustmentsPanelProps) {
+  const t = useT()
   const [open, setOpen] = useState<string | null>(null)
 
   // Display state (drives slider UI)
@@ -313,7 +316,7 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
     <aside className="w-72 bg-slate-900 border-l border-slate-700 flex flex-col overflow-hidden shrink-0">
       <div className="border-b border-slate-700 shrink-0">
         <div className="px-4 py-2.5 flex items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Adjustments</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">{t('adj.header')}</span>
           {isLoading && (
             <svg className="animate-spin h-3 w-3 text-indigo-400 ml-auto" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -332,8 +335,8 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
           style={{ display: isLoading ? 'block' : 'none' }}
         />
 
-        <Section id="bc" title="Brightness / Contrast" open={open === 'bc'} onToggle={toggle}>
-          <Slider label="Brightness" value={bc.brightness} min={-100} max={100} step={1}
+        <Section id="bc" title={t('adj.brightness-contrast')} open={open === 'bc'} onToggle={toggle}>
+          <Slider label={t('adj.brightness')} value={bc.brightness} min={-100} max={100} step={1}
             onChange={(v) => {
               const next = { ...bcRef.current, brightness: v }
               bcRef.current = next; setBc(next)
@@ -342,7 +345,7 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
               onPreviewFilterChange(f)
             }}
             onCommit={() => commitToRust({ type: 'brightness-contrast', ...bcRef.current })} />
-          <Slider label="Contrast" value={bc.contrast} min={-100} max={100} step={1}
+          <Slider label={t('adj.contrast')} value={bc.contrast} min={-100} max={100} step={1}
             onChange={(v) => {
               const next = { ...bcRef.current, contrast: v }
               bcRef.current = next; setBc(next)
@@ -353,8 +356,8 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
             onCommit={() => commitToRust({ type: 'brightness-contrast', ...bcRef.current })} />
         </Section>
 
-        <Section id="exposure" title="Exposure" open={open === 'exposure'} onToggle={toggle}>
-          <Slider label="Exposure" value={exposure} min={-3} max={3} step={0.05} unit=" EV"
+        <Section id="exposure" title={t('adj.exposure')} open={open === 'exposure'} onToggle={toggle}>
+          <Slider label={t('adj.exposure-label')} value={exposure} min={-3} max={3} step={0.05} unit=" EV"
             onChange={(v) => {
               setExposure(v)
               onPreviewFilterChange(v === 0 ? null : `brightness(${Math.pow(2, v).toFixed(3)})`)
@@ -362,11 +365,11 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
             onCommit={(v) => commitToRust({ type: 'exposure', exposure: v })} />
         </Section>
 
-        <Section id="hsl" title="Hue / Saturation" open={open === 'hsl'} onToggle={toggle}>
+        <Section id="hsl" title={t('adj.hue-saturation')} open={open === 'hsl'} onToggle={toggle}>
           {(['hue', 'saturation', 'lightness'] as const).map((field) => (
             <Slider
               key={field}
-              label={field.charAt(0).toUpperCase() + field.slice(1)}
+              label={t(`adj.${field}`)}
               value={hsl[field]}
               min={field === 'hue' ? -180 : -100}
               max={field === 'hue' ? 180 : 100}
@@ -384,8 +387,8 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
           ))}
         </Section>
 
-        <Section id="vibrance" title="Vibrance" open={open === 'vibrance'} onToggle={toggle}>
-          <Slider label="Vibrance" value={vibrance} min={-100} max={100} step={1}
+        <Section id="vibrance" title={t('adj.vibrance')} open={open === 'vibrance'} onToggle={toggle}>
+          <Slider label={t('adj.vibrance-label')} value={vibrance} min={-100} max={100} step={1}
             onChange={(v) => {
               setVibrance(v)
               onPreviewFilterChange(v === 0 ? null : `saturate(${((v + 100) / 100).toFixed(3)})`)
@@ -393,25 +396,25 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
             onCommit={(v) => commitToRust({ type: 'vibrance', vibrance: v })} />
         </Section>
 
-        <Section id="levels" title="Levels" open={open === 'levels'} onToggle={toggle}>
-          <Slider label="Input black" value={levels.inBlack} min={0} max={253} step={1}
+        <Section id="levels" title={t('adj.levels')} open={open === 'levels'} onToggle={toggle}>
+          <Slider label={t('adj.in-black')} value={levels.inBlack} min={0} max={253} step={1}
             onChange={(v) => { const n = { ...levelsRef.current, inBlack: Math.min(v, levelsRef.current.inWhite - 2) }; levelsRef.current = n; setLevels(n) }}
             onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
-          <Slider label="Input white" value={levels.inWhite} min={2} max={255} step={1}
+          <Slider label={t('adj.in-white')} value={levels.inWhite} min={2} max={255} step={1}
             onChange={(v) => { const n = { ...levelsRef.current, inWhite: Math.max(v, levelsRef.current.inBlack + 2) }; levelsRef.current = n; setLevels(n) }}
             onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
-          <Slider label="Gamma" value={levels.gamma} min={0.1} max={10} step={0.05}
+          <Slider label={t('adj.gamma')} value={levels.gamma} min={0.1} max={10} step={0.05}
             onChange={(v) => { const n = { ...levelsRef.current, gamma: v }; levelsRef.current = n; setLevels(n) }}
             onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
-          <Slider label="Output black" value={levels.outBlack} min={0} max={255} step={1}
+          <Slider label={t('adj.out-black')} value={levels.outBlack} min={0} max={255} step={1}
             onChange={(v) => { const n = { ...levelsRef.current, outBlack: Math.min(v, levelsRef.current.outWhite - 1) }; levelsRef.current = n; setLevels(n) }}
             onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
-          <Slider label="Output white" value={levels.outWhite} min={0} max={255} step={1}
+          <Slider label={t('adj.out-white')} value={levels.outWhite} min={0} max={255} step={1}
             onChange={(v) => { const n = { ...levelsRef.current, outWhite: Math.max(v, levelsRef.current.outBlack + 1) }; levelsRef.current = n; setLevels(n) }}
             onCommit={() => commitToRust({ type: 'levels', ...levelsRef.current })} />
         </Section>
 
-        <Section id="curves" title="Curves" open={open === 'curves'} onToggle={toggle}>
+        <Section id="curves" title={t('adj.curves')} open={open === 'curves'} onToggle={toggle}>
           <CurvesEditor
             userPoints={curvePoints}
             onChange={setCurvePoints}
@@ -419,29 +422,29 @@ export function AdjustmentsPanel({ tabId, isLoading, onApply, onPreviewFilterCha
           />
         </Section>
 
-        <Section id="wb" title="White Balance" open={open === 'wb'} onToggle={toggle}>
-          <Slider label="Temperature" value={wb.temperature} min={-100} max={100} step={1}
+        <Section id="wb" title={t('adj.white-balance')} open={open === 'wb'} onToggle={toggle}>
+          <Slider label={t('adj.temperature')} value={wb.temperature} min={-100} max={100} step={1}
             onChange={(v) => { const n = { ...wbRef.current, temperature: v }; wbRef.current = n; setWb(n) }}
             onCommit={() => commitToRust({ type: 'white-balance', ...wbRef.current })} />
-          <Slider label="Tint" value={wb.tint} min={-100} max={100} step={1}
+          <Slider label={t('adj.tint')} value={wb.tint} min={-100} max={100} step={1}
             onChange={(v) => { const n = { ...wbRef.current, tint: v }; wbRef.current = n; setWb(n) }}
             onCommit={() => commitToRust({ type: 'white-balance', ...wbRef.current })} />
         </Section>
 
-        <Section id="sharpen" title="Sharpen" open={open === 'sharpen'} onToggle={toggle}>
-          <Slider label="Amount" value={sharpen.amount} min={0} max={200} step={1}
+        <Section id="sharpen" title={t('adj.sharpen')} open={open === 'sharpen'} onToggle={toggle}>
+          <Slider label={t('adj.amount')} value={sharpen.amount} min={0} max={200} step={1}
             onChange={(v) => { const n = { ...sharpenRef.current, amount: v }; sharpenRef.current = n; setSharpen(n) }}
             onCommit={() => commitToRust({ type: 'sharpen', ...sharpenRef.current })} />
-          <Slider label="Radius" value={sharpen.radius} min={0.1} max={5} step={0.1}
+          <Slider label={t('adj.radius')} value={sharpen.radius} min={0.1} max={5} step={0.1}
             onChange={(v) => { const n = { ...sharpenRef.current, radius: v }; sharpenRef.current = n; setSharpen(n) }}
             onCommit={() => commitToRust({ type: 'sharpen', ...sharpenRef.current })} />
-          <Slider label="Threshold" value={sharpen.threshold} min={0} max={255} step={1}
+          <Slider label={t('adj.threshold')} value={sharpen.threshold} min={0} max={255} step={1}
             onChange={(v) => { const n = { ...sharpenRef.current, threshold: v }; sharpenRef.current = n; setSharpen(n) }}
             onCommit={() => commitToRust({ type: 'sharpen', ...sharpenRef.current })} />
         </Section>
 
-        <Section id="denoise" title="Denoise" open={open === 'denoise'} onToggle={toggle}>
-          <Slider label="Strength" value={denoise} min={0} max={100} step={1}
+        <Section id="denoise" title={t('adj.denoise')} open={open === 'denoise'} onToggle={toggle}>
+          <Slider label={t('adj.strength')} value={denoise} min={0} max={100} step={1}
             onChange={(v) => {
               setDenoise(v)
               onPreviewFilterChange(v === 0 ? null : `blur(${(v / 100).toFixed(2)}px)`)
