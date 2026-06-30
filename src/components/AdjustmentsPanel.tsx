@@ -24,6 +24,8 @@ interface AdjustmentsPanelProps {
   isLoading: boolean
   onApply: (cmd: AdjustmentCommand) => Promise<void>
   onPreviewFilterChange: (filter: string | null) => void
+  onReset?: () => void
+  canReset?: boolean
 }
 
 // ─── Curve LUT ───────────────────────────────────────────────────────────────
@@ -335,6 +337,24 @@ function Section({
   )
 }
 
+// ─── Reset icon ──────────────────────────────────────────────────────────────
+
+function ResetIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polyline points="1 4 1 10 7 10" />
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+    </svg>
+  )
+}
+
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
 const BC_DEF = { brightness: 0, contrast: 0 }
@@ -350,6 +370,8 @@ export function AdjustmentsPanel({
   isLoading,
   onApply,
   onPreviewFilterChange,
+  onReset,
+  canReset = false,
 }: AdjustmentsPanelProps) {
   const t = useT()
   const [open, setOpen] = useState<string | null>(null)
@@ -409,6 +431,29 @@ export function AdjustmentsPanel({
     [onApply, onPreviewFilterChange],
   )
 
+  const resetLocalState = useCallback(() => {
+    setBc(BC_DEF)
+    bcRef.current = BC_DEF
+    setExposure(0)
+    setHsl(HSL_DEF)
+    hslRef.current = HSL_DEF
+    setVibrance(0)
+    setLevels(LEVELS_DEF)
+    levelsRef.current = LEVELS_DEF
+    setCurvePoints([])
+    setWb(WB_DEF)
+    wbRef.current = WB_DEF
+    setSharpen(SHARPEN_DEF)
+    sharpenRef.current = SHARPEN_DEF
+    setDenoise(0)
+    onPreviewFilterChange(null)
+  }, [onPreviewFilterChange])
+
+  const handleReset = useCallback(() => {
+    resetLocalState()
+    onReset?.()
+  }, [resetLocalState, onReset])
+
   useEffect(() => {
     return () => {
       onPreviewFilterChange(null)
@@ -426,27 +471,36 @@ export function AdjustmentsPanel({
           <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
             {t('adj.header')}
           </span>
-          {isLoading && (
-            <svg
-              className="animate-spin h-3 w-3 text-indigo-400 ml-auto"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-          )}
+          <div className="ml-auto flex items-center gap-1.5">
+            {onReset && (
+              <button
+                onClick={handleReset}
+                disabled={!canReset || isLoading}
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-700/60 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title={t('adj.reset')}
+                aria-label={t('adj.reset')}
+              >
+                <ResetIcon />
+              </button>
+            )}
+            {isLoading && (
+              <svg className="animate-spin h-3 w-3 text-indigo-400" viewBox="0 0 24 24" fill="none">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+            )}
+          </div>
         </div>
         {isLoading && <div className="h-0.5 bg-indigo-600 animate-pulse" />}
       </div>

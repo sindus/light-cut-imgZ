@@ -37,6 +37,8 @@ interface FiltersPanelProps {
   isLoading: boolean
   onApply: (cmd: FilterCommand) => Promise<void>
   onPreviewFilterChange: (filter: string | null) => void
+  onReset?: () => void
+  canReset?: boolean
 }
 
 // ── Preset definitions ────────────────────────────────────────────────────────
@@ -168,6 +170,24 @@ function Slider({ label, value, min, max, step, unit = '', onChange, onCommit }:
   )
 }
 
+// ── Reset icon ────────────────────────────────────────────────────────────────
+
+function ResetIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polyline points="1 4 1 10 7 10" />
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+    </svg>
+  )
+}
+
 // ── Section accordion ─────────────────────────────────────────────────────────
 
 interface SectionProps {
@@ -210,6 +230,8 @@ export function FiltersPanel({
   isLoading,
   onApply,
   onPreviewFilterChange,
+  onReset,
+  canReset = false,
 }: FiltersPanelProps) {
   const t = useT()
   const [openSection, setOpenSection] = useState<string | null>(null)
@@ -359,23 +381,36 @@ export function FiltersPanel({
       <div className="px-3 py-2.5 border-b border-slate-700 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-slate-200">{t('fil.header')}</span>
-          {isLoading && (
-            <svg
-              className="animate-spin w-3.5 h-3.5 text-indigo-400"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-          )}
+          <div className="flex items-center gap-1.5">
+            {onReset && (
+              <button
+                onClick={onReset}
+                disabled={!canReset || isLoading}
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-700/60 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title={t('adj.reset')}
+                aria-label={t('adj.reset')}
+              >
+                <ResetIcon />
+              </button>
+            )}
+            {isLoading && (
+              <svg
+                className="animate-spin w-3.5 h-3.5 text-indigo-400"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+            )}
+          </div>
         </div>
         {isLoading && <div className="mt-1.5 h-0.5 bg-indigo-500/30 rounded animate-pulse" />}
       </div>

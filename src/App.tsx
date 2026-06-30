@@ -97,6 +97,7 @@ export default function App() {
     handleFilterBlurGaussian,
     handleFilterBlurMotion,
     handleFilterBlurRadial,
+    handleResetToOriginal,
   } = useImageEditor()
 
   const [exportOpen, setExportOpen] = useState(false)
@@ -525,6 +526,8 @@ export default function App() {
                 isLoading={isLoading}
                 onApply={handleAdjustmentCommand}
                 onPreviewFilterChange={handlePreviewFilterChange}
+                onReset={handleResetToOriginal}
+                canReset={historyIndex > 0}
               />
             )}
 
@@ -535,6 +538,8 @@ export default function App() {
                 isLoading={isLoading}
                 onApply={handleFilterCommand}
                 onPreviewFilterChange={handlePreviewFilterChange}
+                onReset={handleResetToOriginal}
+                canReset={historyIndex > 0}
               />
             )}
 
