@@ -140,6 +140,7 @@ export default function App() {
   const [brushSize, setBrushSize] = useState(30)
   const [maskClearSignal, setMaskClearSignal] = useState(0)
   const maskCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const handleInpaintApplyRef = useRef<() => Promise<void>>(async () => {})
 
   const activeTabIdRef = useRef(activeTabId)
   useEffect(() => {
@@ -250,6 +251,9 @@ export default function App() {
       } else if (e.key === 'Escape') {
         if (mode === 'eyedropper') exitEyedropperMode()
         else if (mode === 'inpainting') exitInpaintingMode()
+      } else if (e.key === 'Enter' && mode === 'inpainting') {
+        e.preventDefault()
+        handleInpaintApplyRef.current()
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -450,6 +454,7 @@ export default function App() {
     if (!b64) return
     await handleInpaint(b64, image.width, image.height)
   }
+  handleInpaintApplyRef.current = handleInpaintApply
 
   const pickedHex = pickedColor
     ? `#${[pickedColor.r, pickedColor.g, pickedColor.b].map((v) => v.toString(16).padStart(2, '0')).join('')}`

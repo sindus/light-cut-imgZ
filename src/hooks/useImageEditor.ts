@@ -620,7 +620,6 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
           )
           return { ...tab, image: result, history: nextHistory, historyIndex: nextIndex }
         })
-        setMode('idle')
       })
     },
     [withLoading, activeTabId, updateTab],
