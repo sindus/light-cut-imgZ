@@ -58,15 +58,15 @@ pub fn canvas_resize_image(
     }
 
     let (off_x, off_y) = match anchor.as_str() {
-        "top-left"      => (0, 0),
-        "top-center"    => ((width - orig_w) / 2, 0),
-        "top-right"     => (width - orig_w, 0),
-        "middle-left"   => (0, (height - orig_h) / 2),
-        "center"        => ((width - orig_w) / 2, (height - orig_h) / 2),
-        "middle-right"  => (width - orig_w, (height - orig_h) / 2),
-        "bottom-left"   => (0, height - orig_h),
+        "top-left" => (0, 0),
+        "top-center" => ((width - orig_w) / 2, 0),
+        "top-right" => (width - orig_w, 0),
+        "middle-left" => (0, (height - orig_h) / 2),
+        "center" => ((width - orig_w) / 2, (height - orig_h) / 2),
+        "middle-right" => (width - orig_w, (height - orig_h) / 2),
+        "bottom-left" => (0, height - orig_h),
         "bottom-center" => ((width - orig_w) / 2, height - orig_h),
-        "bottom-right"  => (width - orig_w, height - orig_h),
+        "bottom-right" => (width - orig_w, height - orig_h),
         other => return Err(format!("Unknown anchor: {other}")),
     };
 

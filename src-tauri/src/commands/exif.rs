@@ -13,7 +13,10 @@ pub struct ExifField {
 }
 
 #[tauri::command]
-pub async fn get_exif(state: State<'_, AppState>, tab_id: String) -> Result<Vec<ExifField>, String> {
+pub async fn get_exif(
+    state: State<'_, AppState>,
+    tab_id: String,
+) -> Result<Vec<ExifField>, String> {
     let source_path = {
         let map = state.0.lock().map_err(|e| e.to_string())?;
         let history = map.get(&tab_id).ok_or("Tab not found")?;
@@ -64,7 +67,11 @@ pub async fn strip_exif(
         .map(|s| s.to_lowercase())
         .unwrap_or_default();
 
-    let filter_ext = if ext == "jpg" || ext == "jpeg" { "jpg" } else { &ext };
+    let filter_ext = if ext == "jpg" || ext == "jpeg" {
+        "jpg"
+    } else {
+        &ext
+    };
 
     let save_path = app
         .dialog()
@@ -80,9 +87,9 @@ pub async fn strip_exif(
 
     if (ext == "jpg" || ext == "jpeg") && source_path.is_some() {
         // Lossless EXIF removal for JPEG
-        let data = std::fs::read(source_path.as_deref().ok_or("No source path")?).map_err(|e| e.to_string())?;
-        let mut jpeg = img_parts::jpeg::Jpeg::from_bytes(data.into())
+        let data = std::fs::read(source_path.as_deref().ok_or("No source path")?)
             .map_err(|e| e.to_string())?;
+        let mut jpeg = img_parts::jpeg::Jpeg::from_bytes(data.into()).map_err(|e| e.to_string())?;
         jpeg.set_exif(None);
         std::fs::write(&output, jpeg.encoder().bytes()).map_err(|e| e.to_string())?;
     } else {

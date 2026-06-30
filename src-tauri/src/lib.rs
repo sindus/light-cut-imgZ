@@ -85,7 +85,6 @@ pub struct LangMenuState {
     pub fr: tauri::menu::CheckMenuItem<tauri::Wry>,
 }
 
-
 const RELEASES_URL: &str = "https://github.com/sindus/light-cut-imgZ/releases";
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -140,9 +139,15 @@ pub fn run() {
                 .item(&toggle_history_item)
                 .build()?;
 
-            let menu = MenuBuilder::new(app).item(&file_submenu).item(&edit_submenu).build()?;
+            let menu = MenuBuilder::new(app)
+                .item(&file_submenu)
+                .item(&edit_submenu)
+                .build()?;
             app.set_menu(menu)?;
-            app.manage(Mutex::new(LangMenuState { en: lang_en_item, fr: lang_fr_item }));
+            app.manage(Mutex::new(LangMenuState {
+                en: lang_en_item,
+                fr: lang_fr_item,
+            }));
             Ok(())
         })
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -177,9 +182,7 @@ pub fn run() {
                 app.emit("menu-set-language", "fr").ok();
             }
             "check-updates" => {
-                app.opener()
-                    .open_url(RELEASES_URL, None::<&str>)
-                    .ok();
+                app.opener().open_url(RELEASES_URL, None::<&str>).ok();
             }
             _ => {}
         })

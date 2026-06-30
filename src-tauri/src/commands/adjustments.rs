@@ -14,7 +14,11 @@ fn rgb_to_hsl(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
         return (0.0, 0.0, l);
     }
     let d = max - min;
-    let s = if l > 0.5 { d / (2.0 - max - min) } else { d / (max + min) };
+    let s = if l > 0.5 {
+        d / (2.0 - max - min)
+    } else {
+        d / (max + min)
+    };
     let h = if (max - r).abs() < 1e-6 {
         let mut h = (g - b) / d;
         if g < b {
@@ -52,7 +56,11 @@ fn hsl_to_rgb(h: f32, s: f32, l: f32) -> (f32, f32, f32) {
     if s < 1e-6 {
         return (l, l, l);
     }
-    let q = if l < 0.5 { l * (1.0 + s) } else { l + s - l * s };
+    let q = if l < 0.5 {
+        l * (1.0 + s)
+    } else {
+        l + s - l * s
+    };
     let p = 2.0 * l - q;
     (
         hue_channel(p, q, h + 1.0 / 3.0),
@@ -455,7 +463,11 @@ mod tests {
     fn curve_lut_brightens_midtones() {
         let pts = [[0.0f32, 0.0], [0.5, 0.75], [1.0, 1.0]];
         let lut = build_curve_lut(&pts);
-        assert!(lut[128] > 150, "midtone should be brighter, got {}", lut[128]);
+        assert!(
+            lut[128] > 150,
+            "midtone should be brighter, got {}",
+            lut[128]
+        );
     }
 
     #[test]
@@ -487,6 +499,9 @@ mod tests {
         let factor = (259.0 * (c + 255.0)) / (255.0 * (259.0 - c));
         let bias = 0.0f32;
         let p = rgba.get_pixel(0, 0);
-        assert_eq!(clamp_u8((p[0] as f32 - 128.0) * factor + 128.0 + bias), p[0]);
+        assert_eq!(
+            clamp_u8((p[0] as f32 - 128.0) * factor + 128.0 + bias),
+            p[0]
+        );
     }
 }

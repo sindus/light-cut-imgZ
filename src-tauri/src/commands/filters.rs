@@ -1,4 +1,4 @@
-use image::{DynamicImage, imageops, GenericImageView};
+use image::{imageops, DynamicImage, GenericImageView};
 use tauri::State;
 
 use super::open::{build_meta, ImageMeta};
@@ -33,7 +33,11 @@ fn hash_noise(x: u32, y: u32, channel: u32) -> f32 {
 
 fn adjust_saturation(r: f32, g: f32, b: f32, factor: f32) -> (f32, f32, f32) {
     let luma = 0.299 * r + 0.587 * g + 0.114 * b;
-    (lerp(luma, r, factor), lerp(luma, g, factor), lerp(luma, b, factor))
+    (
+        lerp(luma, r, factor),
+        lerp(luma, g, factor),
+        lerp(luma, b, factor),
+    )
 }
 
 fn adjust_contrast_pixel(v: f32, factor: f32) -> f32 {
@@ -109,10 +113,7 @@ pub fn filter_sepia(
 
 /// Invert all colour channels (alpha preserved).
 #[tauri::command]
-pub fn filter_invert(
-    state: State<'_, AppState>,
-    tab_id: String,
-) -> Result<ImageMeta, String> {
+pub fn filter_invert(state: State<'_, AppState>, tab_id: String) -> Result<ImageMeta, String> {
     let mut map = state.0.lock().map_err(|e| e.to_string())?;
     let history = map.get_mut(&tab_id).ok_or("Tab not found")?;
     let img = history.current().ok_or("No image loaded")?.clone();
@@ -257,7 +258,11 @@ pub fn filter_posterize(
             let p = rgba.get_pixel(x, y);
             let [r, g, b, a] = p.0;
             let quantize = |c: u8| clamp_u8((c as f32 / step).round() * step);
-            rgba.put_pixel(x, y, image::Rgba([quantize(r), quantize(g), quantize(b), a]));
+            rgba.put_pixel(
+                x,
+                y,
+                image::Rgba([quantize(r), quantize(g), quantize(b), a]),
+            );
         }
     }
 
@@ -308,10 +313,7 @@ pub fn filter_duotone(
 
 /// Pencil-sketch effect via colour-dodge blend of grayscale and blurred-inverted layers.
 #[tauri::command]
-pub fn filter_sketch(
-    state: State<'_, AppState>,
-    tab_id: String,
-) -> Result<ImageMeta, String> {
+pub fn filter_sketch(state: State<'_, AppState>, tab_id: String) -> Result<ImageMeta, String> {
     let mut map = state.0.lock().map_err(|e| e.to_string())?;
     let history = map.get_mut(&tab_id).ok_or("Tab not found")?;
     let img = history.current().ok_or("No image loaded")?.clone();
@@ -732,12 +734,16 @@ pub fn filter_blur_motion(
 
             if count > 0.0 {
                 let a = rgba.get_pixel(x, y)[3];
-                result.put_pixel(x, y, image::Rgba([
-                    clamp_u8(r_sum / count),
-                    clamp_u8(g_sum / count),
-                    clamp_u8(b_sum / count),
-                    a,
-                ]));
+                result.put_pixel(
+                    x,
+                    y,
+                    image::Rgba([
+                        clamp_u8(r_sum / count),
+                        clamp_u8(g_sum / count),
+                        clamp_u8(b_sum / count),
+                        a,
+                    ]),
+                );
             }
         }
     }
@@ -772,10 +778,18 @@ pub fn filter_blur_radial(
             let mut b_sum = 0f32;
 
             for i in 0..samples {
-                let t = if samples > 1 { i as f32 / (samples - 1) as f32 } else { 0.0 };
+                let t = if samples > 1 {
+                    i as f32 / (samples - 1) as f32
+                } else {
+                    0.0
+                };
                 let scale = 1.0 - t * strength.clamp(0.0, 0.95);
-                let sx = (cx + (x as f32 - cx) * scale).round().clamp(0.0, (w - 1) as f32) as u32;
-                let sy = (cy + (y as f32 - cy) * scale).round().clamp(0.0, (h - 1) as f32) as u32;
+                let sx = (cx + (x as f32 - cx) * scale)
+                    .round()
+                    .clamp(0.0, (w - 1) as f32) as u32;
+                let sy = (cy + (y as f32 - cy) * scale)
+                    .round()
+                    .clamp(0.0, (h - 1) as f32) as u32;
                 let p = rgba.get_pixel(sx, sy);
                 r_sum += p[0] as f32;
                 g_sum += p[1] as f32;
@@ -783,12 +797,16 @@ pub fn filter_blur_radial(
             }
 
             let a = rgba.get_pixel(x, y)[3];
-            result.put_pixel(x, y, image::Rgba([
-                clamp_u8(r_sum / samples as f32),
-                clamp_u8(g_sum / samples as f32),
-                clamp_u8(b_sum / samples as f32),
-                a,
-            ]));
+            result.put_pixel(
+                x,
+                y,
+                image::Rgba([
+                    clamp_u8(r_sum / samples as f32),
+                    clamp_u8(g_sum / samples as f32),
+                    clamp_u8(b_sum / samples as f32),
+                    a,
+                ]),
+            );
         }
     }
 
@@ -877,7 +895,10 @@ mod tests {
         // Centre pixel: (50, 50) → ndx=0, ndy=0, dist=0
         // dist < (1 - feather) so t clamped to 0, factor = 1.0
         let f = vignette_factor(50, 50, w, h, 1.0, 0.5);
-        assert!((f - 1.0).abs() < 0.01, "centre factor should be ~1.0, got {f}");
+        assert!(
+            (f - 1.0).abs() < 0.01,
+            "centre factor should be ~1.0, got {f}"
+        );
     }
 
     #[test]
@@ -913,23 +934,42 @@ mod tests {
         let mut result = rgba.clone();
         for y in 0..h {
             for x in 0..w {
-                let mut r_sum = 0f32; let mut g_sum = 0f32; let mut b_sum = 0f32; let mut count = 0f32;
+                let mut r_sum = 0f32;
+                let mut g_sum = 0f32;
+                let mut b_sum = 0f32;
+                let mut count = 0f32;
                 for i in -distance..=distance {
                     let sx = (x as f32 + i as f32 * dx).round() as i32;
                     let sy = (y as f32 + i as f32 * dy).round() as i32;
                     if sx >= 0 && sx < w as i32 && sy >= 0 && sy < h as i32 {
                         let p = rgba.get_pixel(sx as u32, sy as u32);
-                        r_sum += p[0] as f32; g_sum += p[1] as f32; b_sum += p[2] as f32; count += 1.0;
+                        r_sum += p[0] as f32;
+                        g_sum += p[1] as f32;
+                        b_sum += p[2] as f32;
+                        count += 1.0;
                     }
                 }
                 if count > 0.0 {
                     let a = rgba.get_pixel(x, y)[3];
-                    result.put_pixel(x, y, image::Rgba([clamp_u8(r_sum / count), clamp_u8(g_sum / count), clamp_u8(b_sum / count), a]));
+                    result.put_pixel(
+                        x,
+                        y,
+                        image::Rgba([
+                            clamp_u8(r_sum / count),
+                            clamp_u8(g_sum / count),
+                            clamp_u8(b_sum / count),
+                            a,
+                        ]),
+                    );
                 }
             }
         }
         // Every pixel should still be 100, 150, 200
-        for p in result.pixels() { assert_eq!(p[0], 100); assert_eq!(p[1], 150); assert_eq!(p[2], 200); }
+        for p in result.pixels() {
+            assert_eq!(p[0], 100);
+            assert_eq!(p[1], 150);
+            assert_eq!(p[2], 200);
+        }
     }
 
     #[test]
@@ -939,24 +979,50 @@ mod tests {
         let (w, h) = (rgba.width(), rgba.height());
         let samples = 8u32;
         let strength = 0.5f32;
-        let cx = w as f32 / 2.0; let cy = h as f32 / 2.0;
+        let cx = w as f32 / 2.0;
+        let cy = h as f32 / 2.0;
         let mut result = rgba.clone();
         for y in 0..h {
             for x in 0..w {
-                let mut r_sum = 0f32; let mut g_sum = 0f32; let mut b_sum = 0f32;
+                let mut r_sum = 0f32;
+                let mut g_sum = 0f32;
+                let mut b_sum = 0f32;
                 for i in 0..samples {
-                    let t = if samples > 1 { i as f32 / (samples - 1) as f32 } else { 0.0 };
+                    let t = if samples > 1 {
+                        i as f32 / (samples - 1) as f32
+                    } else {
+                        0.0
+                    };
                     let scale = 1.0 - t * strength;
-                    let sx = (cx + (x as f32 - cx) * scale).round().clamp(0.0, (w - 1) as f32) as u32;
-                    let sy = (cy + (y as f32 - cy) * scale).round().clamp(0.0, (h - 1) as f32) as u32;
+                    let sx = (cx + (x as f32 - cx) * scale)
+                        .round()
+                        .clamp(0.0, (w - 1) as f32) as u32;
+                    let sy = (cy + (y as f32 - cy) * scale)
+                        .round()
+                        .clamp(0.0, (h - 1) as f32) as u32;
                     let p = rgba.get_pixel(sx, sy);
-                    r_sum += p[0] as f32; g_sum += p[1] as f32; b_sum += p[2] as f32;
+                    r_sum += p[0] as f32;
+                    g_sum += p[1] as f32;
+                    b_sum += p[2] as f32;
                 }
                 let a = rgba.get_pixel(x, y)[3];
-                result.put_pixel(x, y, image::Rgba([clamp_u8(r_sum / samples as f32), clamp_u8(g_sum / samples as f32), clamp_u8(b_sum / samples as f32), a]));
+                result.put_pixel(
+                    x,
+                    y,
+                    image::Rgba([
+                        clamp_u8(r_sum / samples as f32),
+                        clamp_u8(g_sum / samples as f32),
+                        clamp_u8(b_sum / samples as f32),
+                        a,
+                    ]),
+                );
             }
         }
-        for p in result.pixels() { assert_eq!(p[0], 80); assert_eq!(p[1], 120); assert_eq!(p[2], 200); }
+        for p in result.pixels() {
+            assert_eq!(p[0], 80);
+            assert_eq!(p[1], 120);
+            assert_eq!(p[2], 200);
+        }
     }
 
     #[test]
