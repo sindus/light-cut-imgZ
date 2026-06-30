@@ -69,13 +69,25 @@ export function CanvasResizeDialog({
   const ratio = originalWidth / (originalHeight || 1)
 
   const handleWidthChange = (raw: number) => {
-    const w = Math.max(originalWidth, raw || originalWidth)
+    if (isNaN(raw)) return
+    setWidth(raw)
+    if (lockRatio && raw > 0) setHeight(Math.round(raw / ratio))
+  }
+
+  const handleWidthBlur = () => {
+    const w = Math.max(originalWidth, width || originalWidth)
     setWidth(w)
     if (lockRatio) setHeight(Math.max(originalHeight, Math.round(w / ratio)))
   }
 
   const handleHeightChange = (raw: number) => {
-    const h = Math.max(originalHeight, raw || originalHeight)
+    if (isNaN(raw)) return
+    setHeight(raw)
+    if (lockRatio && raw > 0) setWidth(Math.round(raw * ratio))
+  }
+
+  const handleHeightBlur = () => {
+    const h = Math.max(originalHeight, height || originalHeight)
     setHeight(h)
     if (lockRatio) setWidth(Math.max(originalWidth, Math.round(h * ratio)))
   }
@@ -122,6 +134,7 @@ export function CanvasResizeDialog({
                   min={originalWidth}
                   value={width}
                   onChange={(e) => handleWidthChange(parseInt(e.target.value))}
+                  onBlur={handleWidthBlur}
                   className="flex-1 bg-slate-700 border border-slate-600 text-white text-sm rounded px-2 py-1.5 text-right"
                 />
                 <span className="text-slate-400 text-xs w-5">px</span>
@@ -135,6 +148,7 @@ export function CanvasResizeDialog({
                   min={originalHeight}
                   value={height}
                   onChange={(e) => handleHeightChange(parseInt(e.target.value))}
+                  onBlur={handleHeightBlur}
                   className="flex-1 bg-slate-700 border border-slate-600 text-white text-sm rounded px-2 py-1.5 text-right"
                 />
                 <span className="text-slate-400 text-xs w-5">px</span>
