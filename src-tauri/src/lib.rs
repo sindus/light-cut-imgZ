@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
-    Emitter,
+    menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
+    Emitter, Manager,
 };
 use tauri_plugin_opener::OpenerExt;
 
@@ -80,6 +80,12 @@ impl AppHistory {
 
 pub struct AppState(pub Mutex<HashMap<String, AppHistory>>);
 
+pub struct LangMenuState {
+    pub en: tauri::menu::CheckMenuItem<tauri::Wry>,
+    pub fr: tauri::menu::CheckMenuItem<tauri::Wry>,
+}
+
+
 const RELEASES_URL: &str = "https://github.com/sindus/light-cut-imgZ/releases";
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -100,8 +106,12 @@ pub fn run() {
                 MenuItemBuilder::with_id("check-updates", "Check for Updates…").build(app)?;
             let about_item =
                 MenuItemBuilder::with_id("about", "About light-cut-imgZ").build(app)?;
-            let lang_en_item = MenuItemBuilder::with_id("lang-en", "English").build(app)?;
-            let lang_fr_item = MenuItemBuilder::with_id("lang-fr", "Français").build(app)?;
+            let lang_en_item = CheckMenuItemBuilder::with_id("lang-en", "English")
+                .checked(true)
+                .build(app)?;
+            let lang_fr_item = CheckMenuItemBuilder::with_id("lang-fr", "Français")
+                .checked(false)
+                .build(app)?;
             let lang_submenu = SubmenuBuilder::new(app, "Language")
                 .item(&lang_en_item)
                 .item(&lang_fr_item)
@@ -132,6 +142,7 @@ pub fn run() {
 
             let menu = MenuBuilder::new(app).item(&file_submenu).item(&edit_submenu).build()?;
             app.set_menu(menu)?;
+            app.manage(Mutex::new(LangMenuState { en: lang_en_item, fr: lang_fr_item }));
             Ok(())
         })
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -185,6 +196,8 @@ pub fn run() {
             commands::export::export_image,
             commands::history::undo_image,
             commands::history::redo_image,
+            commands::history::reset_to_original,
+            commands::menu::set_language_check,
             commands::tabs::close_tab,
             commands::tabs::close_all_tabs,
             commands::tabs::close_other_tabs,

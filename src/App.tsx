@@ -24,6 +24,7 @@ import { ZoomSelect } from './components/ZoomSelect'
 import type { CropRect } from './types'
 import { useImageEditor } from './hooks/useImageEditor'
 import type { ExifField } from './lib/tauri'
+import { setLanguageCheck } from './lib/tauri'
 import { loadPrefs, savePrefs, type Prefs } from './lib/prefs'
 import { addRecentFile, getRecentFiles } from './lib/recentFiles'
 
@@ -127,6 +128,12 @@ export default function App() {
     activeTabIdRef.current = activeTabId
   }, [activeTabId])
 
+  // Sync menu checkmarks with saved language on startup
+  useEffect(() => {
+    setLanguageCheck(prefs.language ?? 'en').catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Tauri menu / native events + drag-drop
   useEffect(() => {
     const unlistenAbout = listen<string>('show-about', (event) => {
@@ -150,6 +157,7 @@ export default function App() {
         savePrefs(updated)
         return updated
       })
+      setLanguageCheck(lang).catch(() => {})
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const unlistenDrop = listen('tauri://drag-drop', (event: any) => {

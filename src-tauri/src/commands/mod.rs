@@ -3,6 +3,7 @@ pub mod exif;
 pub mod export;
 pub mod filters;
 pub mod history;
+pub mod menu;
 pub mod open;
 pub mod tabs;
 pub mod transform;

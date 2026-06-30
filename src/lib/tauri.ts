@@ -96,6 +96,15 @@ export async function redoImage(tabId: string): Promise<ImageMeta> {
   return mapMeta(raw)
 }
 
+export async function resetToOriginal(tabId: string): Promise<ImageMeta> {
+  const raw = await invoke<Record<string, unknown>>('reset_to_original', { tabId })
+  return mapMeta(raw)
+}
+
+export async function setLanguageCheck(lang: string): Promise<void> {
+  return invoke<void>('set_language_check', { lang })
+}
+
 export async function closeTab(tabId: string): Promise<void> {
   return invoke<void>('close_tab', { tabId })
 }
