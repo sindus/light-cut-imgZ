@@ -19,27 +19,32 @@ Légende : ✅ implémenté · 🎯 à faire · ⬜ hors scope actuel
 
 | Statut | Fonctionnalité |
 |--------|----------------|
-| ⬜ | Luminosité / Contraste |
-| ⬜ | Exposition |
-| ⬜ | Saturation / Teinte (Hue) |
-| ⬜ | Vibrance |
-| ⬜ | Niveaux (Levels) — points noir/blanc/gris |
-| ⬜ | Courbes (Curves) |
-| ⬜ | Balance des blancs / Température couleur |
-| ⬜ | Débruitage (noise reduction) |
-| ⬜ | Netteté (sharpen / unsharp mask) |
+| ✅ | Luminosité / Contraste |
+| ✅ | Exposition |
+| ✅ | Saturation / Teinte (Hue) |
+| ✅ | Vibrance |
+| ✅ | Niveaux (Levels) — points noir/blanc/gris |
+| ✅ | Courbes (Curves) |
+| ✅ | Balance des blancs / Température couleur |
+| ✅ | Débruitage (noise reduction) |
+| ✅ | Netteté (sharpen / unsharp mask) |
 
 ## Filtres & effets
 
 | Statut | Fonctionnalité |
 |--------|----------------|
-| ⬜ | Flou (gaussien, de mouvement, radial) |
-| ⬜ | Pixeliser |
-| ⬜ | Vignette |
-| ⬜ | Grain de film |
-| ⬜ | Noir & blanc (avec mélangeur de canaux) |
-| ⬜ | Sépia / Duotone |
-| ⬜ | Inversion des couleurs (négatif) |
+| ✅ | Flou gaussien |
+| ✅ | Flou de mouvement (angle + distance) |
+| ✅ | Flou radial (zoom blur) |
+| ✅ | Pixeliser |
+| ✅ | Postérisé |
+| ✅ | Vignette |
+| ✅ | Grain de film |
+| ✅ | Noir & blanc (avec mélangeur de canaux) |
+| ✅ | Sépia / Duotone |
+| ✅ | Inversion des couleurs (négatif) |
+| ✅ | Sketch (crayon) |
+| ✅ | Lomo / Vintage / Cool / Warm / Fade / Drama / Cross-process |
 
 ## Retouche et dessin
 

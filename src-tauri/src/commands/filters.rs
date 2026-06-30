@@ -674,6 +674,128 @@ pub fn filter_cross_process(
     build_meta(img, "png", history.can_undo(), history.can_redo())
 }
 
+/// Gaussian blur with adjustable radius.
+#[tauri::command]
+pub fn filter_blur_gaussian(
+    state: State<'_, AppState>,
+    tab_id: String,
+    radius: f32,
+) -> Result<ImageMeta, String> {
+    let mut map = state.0.lock().map_err(|e| e.to_string())?;
+    let history = map.get_mut(&tab_id).ok_or("Tab not found")?;
+    let img = history.current().ok_or("No image loaded")?;
+    let blurred = imageops::blur(&img.to_rgba8(), radius.max(0.1));
+    history.push(DynamicImage::ImageRgba8(blurred));
+    let img = history.current().ok_or("State error")?;
+    build_meta(img, "png", history.can_undo(), history.can_redo())
+}
+
+/// Motion blur along a given angle (degrees) over a given distance (pixels).
+#[tauri::command]
+pub fn filter_blur_motion(
+    state: State<'_, AppState>,
+    tab_id: String,
+    angle: f32,    // 0–360°
+    distance: u32, // 1–100 px (half-kernel radius)
+) -> Result<ImageMeta, String> {
+    let mut map = state.0.lock().map_err(|e| e.to_string())?;
+    let history = map.get_mut(&tab_id).ok_or("Tab not found")?;
+    let img = history.current().ok_or("No image loaded")?.clone();
+    let rgba = img.to_rgba8();
+    let (w, h) = (rgba.width(), rgba.height());
+    let distance = distance.clamp(1, 100) as i32;
+
+    let rad = angle.to_radians();
+    let dx = rad.cos();
+    let dy = rad.sin();
+
+    let mut result = rgba.clone();
+    for y in 0..h {
+        for x in 0..w {
+            let mut r_sum = 0f32;
+            let mut g_sum = 0f32;
+            let mut b_sum = 0f32;
+            let mut count = 0f32;
+
+            for i in -distance..=distance {
+                let sx = (x as f32 + i as f32 * dx).round() as i32;
+                let sy = (y as f32 + i as f32 * dy).round() as i32;
+                if sx >= 0 && sx < w as i32 && sy >= 0 && sy < h as i32 {
+                    let p = rgba.get_pixel(sx as u32, sy as u32);
+                    r_sum += p[0] as f32;
+                    g_sum += p[1] as f32;
+                    b_sum += p[2] as f32;
+                    count += 1.0;
+                }
+            }
+
+            if count > 0.0 {
+                let a = rgba.get_pixel(x, y)[3];
+                result.put_pixel(x, y, image::Rgba([
+                    clamp_u8(r_sum / count),
+                    clamp_u8(g_sum / count),
+                    clamp_u8(b_sum / count),
+                    a,
+                ]));
+            }
+        }
+    }
+
+    history.push(DynamicImage::ImageRgba8(result));
+    let img = history.current().ok_or("State error")?;
+    build_meta(img, "png", history.can_undo(), history.can_redo())
+}
+
+/// Radial (zoom) blur from the image centre.
+#[tauri::command]
+pub fn filter_blur_radial(
+    state: State<'_, AppState>,
+    tab_id: String,
+    strength: f32, // 0.0–1.0
+    samples: u32,  // 4–32
+) -> Result<ImageMeta, String> {
+    let mut map = state.0.lock().map_err(|e| e.to_string())?;
+    let history = map.get_mut(&tab_id).ok_or("Tab not found")?;
+    let img = history.current().ok_or("No image loaded")?.clone();
+    let rgba = img.to_rgba8();
+    let (w, h) = (rgba.width(), rgba.height());
+    let samples = samples.clamp(4, 32);
+    let cx = w as f32 / 2.0;
+    let cy = h as f32 / 2.0;
+
+    let mut result = rgba.clone();
+    for y in 0..h {
+        for x in 0..w {
+            let mut r_sum = 0f32;
+            let mut g_sum = 0f32;
+            let mut b_sum = 0f32;
+
+            for i in 0..samples {
+                let t = if samples > 1 { i as f32 / (samples - 1) as f32 } else { 0.0 };
+                let scale = 1.0 - t * strength.clamp(0.0, 0.95);
+                let sx = (cx + (x as f32 - cx) * scale).round().clamp(0.0, (w - 1) as f32) as u32;
+                let sy = (cy + (y as f32 - cy) * scale).round().clamp(0.0, (h - 1) as f32) as u32;
+                let p = rgba.get_pixel(sx, sy);
+                r_sum += p[0] as f32;
+                g_sum += p[1] as f32;
+                b_sum += p[2] as f32;
+            }
+
+            let a = rgba.get_pixel(x, y)[3];
+            result.put_pixel(x, y, image::Rgba([
+                clamp_u8(r_sum / samples as f32),
+                clamp_u8(g_sum / samples as f32),
+                clamp_u8(b_sum / samples as f32),
+                a,
+            ]));
+        }
+    }
+
+    history.push(DynamicImage::ImageRgba8(result));
+    let img = history.current().ok_or("State error")?;
+    build_meta(img, "png", history.can_undo(), history.can_redo())
+}
+
 // ── unit tests ────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -767,6 +889,73 @@ mod tests {
             corner < center,
             "corner factor ({corner}) should be less than center factor ({center})"
         );
+    }
+
+    #[test]
+    fn gaussian_blur_preserves_size() {
+        let img = solid(128, 64, 32);
+        let rgba = img.to_rgba8();
+        let blurred = imageops::blur(&rgba, 2.0);
+        assert_eq!(blurred.width(), rgba.width());
+        assert_eq!(blurred.height(), rgba.height());
+    }
+
+    #[test]
+    fn motion_blur_uniform_image_is_unchanged() {
+        // A perfectly uniform image should be unchanged by any linear blur
+        let img = solid(100, 150, 200);
+        let rgba = img.to_rgba8();
+        let (w, h) = (rgba.width(), rgba.height());
+        let dx = 1.0f32; // horizontal
+        let dy = 0.0f32;
+        let distance = 5i32;
+        let mut result = rgba.clone();
+        for y in 0..h {
+            for x in 0..w {
+                let mut r_sum = 0f32; let mut g_sum = 0f32; let mut b_sum = 0f32; let mut count = 0f32;
+                for i in -distance..=distance {
+                    let sx = (x as f32 + i as f32 * dx).round() as i32;
+                    let sy = (y as f32 + i as f32 * dy).round() as i32;
+                    if sx >= 0 && sx < w as i32 && sy >= 0 && sy < h as i32 {
+                        let p = rgba.get_pixel(sx as u32, sy as u32);
+                        r_sum += p[0] as f32; g_sum += p[1] as f32; b_sum += p[2] as f32; count += 1.0;
+                    }
+                }
+                if count > 0.0 {
+                    let a = rgba.get_pixel(x, y)[3];
+                    result.put_pixel(x, y, image::Rgba([clamp_u8(r_sum / count), clamp_u8(g_sum / count), clamp_u8(b_sum / count), a]));
+                }
+            }
+        }
+        // Every pixel should still be 100, 150, 200
+        for p in result.pixels() { assert_eq!(p[0], 100); assert_eq!(p[1], 150); assert_eq!(p[2], 200); }
+    }
+
+    #[test]
+    fn radial_blur_uniform_image_is_unchanged() {
+        let img = solid(80, 120, 200);
+        let rgba = img.to_rgba8();
+        let (w, h) = (rgba.width(), rgba.height());
+        let samples = 8u32;
+        let strength = 0.5f32;
+        let cx = w as f32 / 2.0; let cy = h as f32 / 2.0;
+        let mut result = rgba.clone();
+        for y in 0..h {
+            for x in 0..w {
+                let mut r_sum = 0f32; let mut g_sum = 0f32; let mut b_sum = 0f32;
+                for i in 0..samples {
+                    let t = if samples > 1 { i as f32 / (samples - 1) as f32 } else { 0.0 };
+                    let scale = 1.0 - t * strength;
+                    let sx = (cx + (x as f32 - cx) * scale).round().clamp(0.0, (w - 1) as f32) as u32;
+                    let sy = (cy + (y as f32 - cy) * scale).round().clamp(0.0, (h - 1) as f32) as u32;
+                    let p = rgba.get_pixel(sx, sy);
+                    r_sum += p[0] as f32; g_sum += p[1] as f32; b_sum += p[2] as f32;
+                }
+                let a = rgba.get_pixel(x, y)[3];
+                result.put_pixel(x, y, image::Rgba([clamp_u8(r_sum / samples as f32), clamp_u8(g_sum / samples as f32), clamp_u8(b_sum / samples as f32), a]));
+            }
+        }
+        for p in result.pixels() { assert_eq!(p[0], 80); assert_eq!(p[1], 120); assert_eq!(p[2], 200); }
     }
 
     #[test]

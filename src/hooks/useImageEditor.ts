@@ -25,6 +25,9 @@ import {
   filterFade,
   filterDrama,
   filterCrossProcess,
+  filterBlurGaussian,
+  filterBlurMotion,
+  filterBlurRadial,
   canvasResizeImage,
   closeAllTabs,
   closeOtherTabs,
@@ -125,6 +128,9 @@ interface ImageEditorActions {
   handleFilterFade: (intensity: number) => Promise<void>
   handleFilterDrama: (intensity: number) => Promise<void>
   handleFilterCrossProcess: (intensity: number) => Promise<void>
+  handleFilterBlurGaussian: (radius: number) => Promise<void>
+  handleFilterBlurMotion: (angle: number, distance: number) => Promise<void>
+  handleFilterBlurRadial: (strength: number, samples: number) => Promise<void>
 }
 
 export function useImageEditor(): ImageEditorState & ImageEditorActions {
@@ -528,6 +534,18 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     (intensity: number) => applyFilter('Cross-process', (id) => filterCrossProcess(id, intensity)),
     [applyFilter],
   )
+  const handleFilterBlurGaussian = useCallback(
+    (radius: number) => applyFilter('Flou gaussien', (id) => filterBlurGaussian(id, radius)),
+    [applyFilter],
+  )
+  const handleFilterBlurMotion = useCallback(
+    (angle: number, distance: number) => applyFilter('Flou de mouvement', (id) => filterBlurMotion(id, angle, distance)),
+    [applyFilter],
+  )
+  const handleFilterBlurRadial = useCallback(
+    (strength: number, samples: number) => applyFilter('Flou radial', (id) => filterBlurRadial(id, strength, samples)),
+    [applyFilter],
+  )
 
   const enterCropMode = useCallback(() => setMode('cropping'), [])
   const exitCropMode = useCallback(() => setMode('idle'), [])
@@ -599,5 +617,8 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     handleFilterFade,
     handleFilterDrama,
     handleFilterCrossProcess,
+    handleFilterBlurGaussian,
+    handleFilterBlurMotion,
+    handleFilterBlurRadial,
   }
 }

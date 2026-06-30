@@ -18,6 +18,9 @@ export type FilterCommand =
   | { type: 'fade'; intensity: number }
   | { type: 'drama'; intensity: number }
   | { type: 'cross-process'; intensity: number }
+  | { type: 'blur-gaussian'; radius: number }
+  | { type: 'blur-motion'; angle: number; distance: number }
+  | { type: 'blur-radial'; strength: number; samples: number }
 
 interface FiltersPanelProps {
   tabId: string | null
@@ -160,6 +163,22 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
   // Posterize state
   const [posterLevels, setPosterLevels] = useState(4)
   const posterRef = useRef(4)
+
+  // Blur state
+  const [blurType, setBlurType] = useState<'gaussian' | 'motion' | 'radial'>('gaussian')
+  const [blurRadius, setBlurRadius] = useState(3)
+  const [blurAngle, setBlurAngle] = useState(0)
+  const [blurDistance, setBlurDistance] = useState(10)
+  const [blurStrength, setBlurStrength] = useState(0.3)
+  const [blurSamples, setBlurSamples] = useState(12)
+  const blurRef = useRef({ type: 'gaussian' as 'gaussian' | 'motion' | 'radial', radius: 3, angle: 0, distance: 10, strength: 0.3, samples: 12 })
+
+  const commitBlur = () => {
+    const b = blurRef.current
+    if (b.type === 'gaussian') commitToRust({ type: 'blur-gaussian', radius: b.radius })
+    else if (b.type === 'motion') commitToRust({ type: 'blur-motion', angle: b.angle, distance: b.distance })
+    else commitToRust({ type: 'blur-radial', strength: b.strength, samples: b.samples })
+  }
 
   // In-flight queue
   const inFlightRef = useRef(false)
@@ -317,6 +336,59 @@ export function FiltersPanel({ tabId, image, isLoading, onApply, onPreviewFilter
             onChange={(v) => { setPosterLevels(v); posterRef.current = v }}
             onCommit={() => commitToRust({ type: 'posterize', levels: posterRef.current })}
           />
+        </Section>
+
+        <Section title="Flou" open={openSection === 'blur'} onToggle={() => toggleSection('blur')}>
+          {/* Type switcher */}
+          <div className="flex gap-1 px-3 pt-1 pb-0.5">
+            {(['gaussian', 'motion', 'radial'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => { setBlurType(t); blurRef.current.type = t }}
+                className={`flex-1 text-[10px] py-1 rounded transition-colors ${blurType === t ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-slate-200'}`}
+              >
+                {t === 'gaussian' ? 'Gaussien' : t === 'motion' ? 'Mouvement' : 'Radial'}
+              </button>
+            ))}
+          </div>
+
+          {blurType === 'gaussian' && (
+            <Slider
+              label="Rayon" value={blurRadius} min={0.5} max={30} step={0.5} unit="px"
+              onChange={(v) => { setBlurRadius(v); blurRef.current.radius = v; onPreviewFilterChange(`blur(${v.toFixed(1)}px)`) }}
+              onCommit={commitBlur}
+            />
+          )}
+
+          {blurType === 'motion' && (
+            <>
+              <Slider
+                label="Angle" value={blurAngle} min={0} max={360} step={1} unit="°"
+                onChange={(v) => { setBlurAngle(v); blurRef.current.angle = v; onPreviewFilterChange(`blur(2px)`) }}
+                onCommit={commitBlur}
+              />
+              <Slider
+                label="Distance" value={blurDistance} min={1} max={50} step={1} unit="px"
+                onChange={(v) => { setBlurDistance(v); blurRef.current.distance = v; onPreviewFilterChange(`blur(${(v / 5).toFixed(1)}px)`) }}
+                onCommit={commitBlur}
+              />
+            </>
+          )}
+
+          {blurType === 'radial' && (
+            <>
+              <Slider
+                label="Force" value={blurStrength} min={0} max={0.95} step={0.01}
+                onChange={(v) => { setBlurStrength(v); blurRef.current.strength = v; onPreviewFilterChange(`blur(${(v * 5).toFixed(1)}px)`) }}
+                onCommit={commitBlur}
+              />
+              <Slider
+                label="Échantillons" value={blurSamples} min={4} max={32} step={1}
+                onChange={(v) => { setBlurSamples(v); blurRef.current.samples = v }}
+                onCommit={commitBlur}
+              />
+            </>
+          )}
         </Section>
 
         <Section title="Duotone" open={openSection === 'duotone'} onToggle={() => toggleSection('duotone')}>

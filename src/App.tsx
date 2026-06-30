@@ -91,6 +91,9 @@ export default function App() {
     handleFilterFade,
     handleFilterDrama,
     handleFilterCrossProcess,
+    handleFilterBlurGaussian,
+    handleFilterBlurMotion,
+    handleFilterBlurRadial,
   } = useImageEditor()
 
   const [exportOpen, setExportOpen] = useState(false)
@@ -248,6 +251,9 @@ export default function App() {
       case 'fade': await handleFilterFade(cmd.intensity); break
       case 'drama': await handleFilterDrama(cmd.intensity); break
       case 'cross-process': await handleFilterCrossProcess(cmd.intensity); break
+      case 'blur-gaussian': await handleFilterBlurGaussian(cmd.radius); break
+      case 'blur-motion': await handleFilterBlurMotion(cmd.angle, cmd.distance); break
+      case 'blur-radial': await handleFilterBlurRadial(cmd.strength, cmd.samples); break
     }
   }
 

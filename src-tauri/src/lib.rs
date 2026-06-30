@@ -199,6 +199,9 @@ pub fn run() {
             commands::filters::filter_fade,
             commands::filters::filter_drama,
             commands::filters::filter_cross_process,
+            commands::filters::filter_blur_gaussian,
+            commands::filters::filter_blur_motion,
+            commands::filters::filter_blur_radial,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

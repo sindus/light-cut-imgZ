@@ -221,3 +221,15 @@ export async function filterDrama(tabId: string, intensity: number): Promise<Ima
 export async function filterCrossProcess(tabId: string, intensity: number): Promise<ImageMeta> {
   return mapMeta(await invoke<Record<string, unknown>>('filter_cross_process', { tabId, intensity }))
 }
+
+export async function filterBlurGaussian(tabId: string, radius: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_blur_gaussian', { tabId, radius }))
+}
+
+export async function filterBlurMotion(tabId: string, angle: number, distance: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_blur_motion', { tabId, angle, distance }))
+}
+
+export async function filterBlurRadial(tabId: string, strength: number, samples: number): Promise<ImageMeta> {
+  return mapMeta(await invoke<Record<string, unknown>>('filter_blur_radial', { tabId, strength, samples }))
+}
