@@ -16,7 +16,7 @@ export interface CropRect {
   height: number
 }
 
-export type EditorMode = 'idle' | 'cropping' | 'rotating' | 'eyedropper'
+export type EditorMode = 'idle' | 'cropping' | 'rotating' | 'eyedropper' | 'inpainting'
 
 export type ExportFormat = 'png' | 'jpeg' | 'webp' | 'bmp' | 'tiff'
 

@@ -22,6 +22,7 @@ interface ToolbarProps {
   onToggleGrid?: () => void
   onCopy?: () => void
   onEyedropperMode?: () => void
+  onInpaintMode?: () => void
   onPrefsOpen?: () => void
 }
 
@@ -95,6 +96,7 @@ export function Toolbar({
   onToggleGrid,
   onCopy,
   onEyedropperMode,
+  onInpaintMode,
   onPrefsOpen,
   onExportOpen,
 }: ToolbarProps) {
@@ -169,6 +171,17 @@ export function Toolbar({
         aria-pressed={mode === 'eyedropper'}
       >
         <EyedropperIcon />
+      </SidebarBtn>
+      <SidebarBtn
+        onClick={onInpaintMode}
+        disabled={disabled}
+        active={mode === 'inpainting'}
+        title={t('tooltip.inpaint')}
+        label={t('toolbar.inpaint')}
+        aria-label={t('tooltip.inpaint')}
+        aria-pressed={mode === 'inpainting'}
+      >
+        <InpaintIcon />
       </SidebarBtn>
       <SidebarBtn
         onClick={onAdjustmentsOpen}
@@ -459,6 +472,24 @@ function FiltersIcon() {
         d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"
         strokeLinecap="round"
       />
+    </svg>
+  )
+}
+
+function InpaintIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M20 14l-6-6-8 8a2.83 2.83 0 0 0 4 4l8-8" />
+      <path d="M6.5 17.5L3 21" strokeLinecap="round" />
+      <circle cx="18" cy="4" r="2" fill="currentColor" stroke="none" />
+      <path d="M3 12h1M7 4v1M12 3h1" strokeLinecap="round" strokeWidth="1.5" />
     </svg>
   )
 }

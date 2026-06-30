@@ -186,6 +186,16 @@ const dict: Record<Lang, Record<string, string>> = {
     'canvas.open': 'Open an image to get started',
     'canvas.hint': 'Click here or use File → Open',
     'canvas.recent': 'Recent',
+    // Toolbar — inpainting
+    'toolbar.inpaint': 'Remove',
+    'tooltip.inpaint': 'Remove object / inpaint',
+    // InpaintingControls
+    'inp.hint': 'Paint over what to remove, then click Apply',
+    'inp.brush': 'Brush size',
+    'inp.clear': 'Clear mask',
+    'inp.cancel': 'Cancel',
+    'inp.apply': 'Apply',
+    'inp.applying': 'Filling…',
   },
   fr: {
     // Toolbar labels
@@ -372,6 +382,16 @@ const dict: Record<Lang, Record<string, string>> = {
     'canvas.open': 'Ouvrir une image pour commencer',
     'canvas.hint': 'Cliquer ici ou utiliser Fichier → Ouvrir',
     'canvas.recent': 'Récents',
+    // Toolbar — inpainting
+    'toolbar.inpaint': 'Retirer',
+    'tooltip.inpaint': 'Supprimer un élément',
+    // InpaintingControls
+    'inp.hint': 'Peindre la zone à supprimer, puis cliquer Appliquer',
+    'inp.brush': 'Taille du pinceau',
+    'inp.clear': 'Effacer le masque',
+    'inp.cancel': 'Annuler',
+    'inp.apply': 'Appliquer',
+    'inp.applying': 'Remplissage…',
   },
 }
 

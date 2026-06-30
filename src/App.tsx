@@ -11,6 +11,7 @@ import { Canvas } from './components/Canvas'
 import { CanvasResizeDialog } from './components/CanvasResizeDialog'
 import { CropControls } from './components/CropControls'
 import { EyedropperControls } from './components/EyedropperControls'
+import { InpaintingControls } from './components/InpaintingControls'
 import { ExifPanel } from './components/ExifPanel'
 import { ExportDialog } from './components/ExportDialog'
 import { FlipControls } from './components/FlipControls'
@@ -39,6 +40,9 @@ export default function App() {
     handleCopyToClipboard,
     enterEyedropperMode,
     exitEyedropperMode,
+    enterInpaintingMode,
+    exitInpaintingMode,
+    handleInpaint,
     tabs,
     activeTabId,
     image,
@@ -133,6 +137,9 @@ export default function App() {
   const handlePreviewFilterChange = useCallback((filter: string | null) => {
     if (previewImgRef.current) previewImgRef.current.style.filter = filter ?? ''
   }, [])
+  const [brushSize, setBrushSize] = useState(30)
+  const [maskClearSignal, setMaskClearSignal] = useState(0)
+  const maskCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
   const activeTabIdRef = useRef(activeTabId)
   useEffect(() => {
@@ -240,13 +247,22 @@ export default function App() {
             }
             break
         }
-      } else if (e.key === 'Escape' && mode === 'eyedropper') {
-        exitEyedropperMode()
+      } else if (e.key === 'Escape') {
+        if (mode === 'eyedropper') exitEyedropperMode()
+        else if (mode === 'inpainting') exitInpaintingMode()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [handleUndo, handleRedo, setZoom, handleCopyToClipboard, mode, exitEyedropperMode])
+  }, [
+    handleUndo,
+    handleRedo,
+    setZoom,
+    handleCopyToClipboard,
+    mode,
+    exitEyedropperMode,
+    exitInpaintingMode,
+  ])
 
   // Load EXIF when panel opens or tab changes
   useEffect(() => {
@@ -400,7 +416,39 @@ export default function App() {
     if (mode === 'cropping') exitCropMode()
     else if (mode === 'rotating') exitRotateMode()
     else if (mode === 'eyedropper') exitEyedropperMode()
+    else if (mode === 'inpainting') exitInpaintingMode()
     setShowFlipBar((b) => !b)
+  }
+
+  const onInpaintMode = () => {
+    if (mode === 'inpainting') {
+      exitInpaintingMode()
+    } else {
+      setShowFlipBar(false)
+      enterInpaintingMode()
+    }
+  }
+
+  function maskToBase64(canvas: HTMLCanvasElement): string {
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return ''
+    const { width, height } = canvas
+    const data = ctx.getImageData(0, 0, width, height).data
+    const alpha = new Uint8Array(width * height)
+    for (let i = 0; i < alpha.length; i++) alpha[i] = data[i * 4 + 3]
+    let binary = ''
+    const chunk = 8192
+    for (let i = 0; i < alpha.length; i += chunk) {
+      binary += String.fromCharCode(...alpha.subarray(i, Math.min(i + chunk, alpha.length)))
+    }
+    return btoa(binary)
+  }
+
+  const handleInpaintApply = async () => {
+    if (!maskCanvasRef.current || !image) return
+    const b64 = maskToBase64(maskCanvasRef.current)
+    if (!b64) return
+    await handleInpaint(b64, image.width, image.height)
   }
 
   const pickedHex = pickedColor
@@ -438,6 +486,7 @@ export default function App() {
           }}
           onCopy={handleCopyToClipboard}
           onEyedropperMode={onEyedropperMode}
+          onInpaintMode={onInpaintMode}
           onPrefsOpen={() => setPrefsOpen(true)}
         />
 
@@ -479,6 +528,16 @@ export default function App() {
               isLoading={isLoading}
             />
           )}
+          {mode === 'inpainting' && (
+            <InpaintingControls
+              brushSize={brushSize}
+              isLoading={isLoading}
+              onBrushSizeChange={setBrushSize}
+              onClear={() => setMaskClearSignal((s) => s + 1)}
+              onCancel={exitInpaintingMode}
+              onApply={handleInpaintApply}
+            />
+          )}
           {(mode === 'eyedropper' || pickedColorResult) && (
             <EyedropperControls
               color={mode === 'eyedropper' ? pickedColor : pickedColorResult}
@@ -515,6 +574,11 @@ export default function App() {
               onOpenByPaths={handleOpenByPaths}
               onColorPick={setPickedColor}
               onColorPickConfirm={handleColorPickConfirm}
+              brushSize={brushSize}
+              maskClearSignal={maskClearSignal}
+              onMaskCanvasRef={(el) => {
+                maskCanvasRef.current = el
+              }}
               onImageRef={(el) => {
                 previewImgRef.current = el
               }}

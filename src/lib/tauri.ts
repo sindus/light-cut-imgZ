@@ -360,3 +360,19 @@ export async function filterBlurRadial(
     await invoke<Record<string, unknown>>('filter_blur_radial', { tabId, strength, samples }),
   )
 }
+
+export async function inpaintImage(
+  tabId: string,
+  maskB64: string,
+  maskWidth: number,
+  maskHeight: number,
+): Promise<ImageMeta> {
+  return mapMeta(
+    await invoke<Record<string, unknown>>('inpaint_image', {
+      tabId,
+      maskB64,
+      maskWidth,
+      maskHeight,
+    }),
+  )
+}

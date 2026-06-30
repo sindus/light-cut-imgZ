@@ -18,6 +18,8 @@ interface CanvasProps {
   gridSize?: number
   recentFiles?: string[]
   isLoading?: boolean
+  brushSize?: number
+  maskClearSignal?: number
   onCropApply: (rect: CropRect) => void
   onCropCancel: () => void
   onCropRectChange?: (rect: CropRect) => void
@@ -27,6 +29,7 @@ interface CanvasProps {
   onColorPick?: (color: PickedColor | null) => void
   onColorPickConfirm?: (color: PickedColor) => void
   onImageRef?: (el: HTMLImageElement | null) => void
+  onMaskCanvasRef?: (canvas: HTMLCanvasElement | null) => void
 }
 
 const ZOOM_STEP = 1.15
@@ -44,6 +47,8 @@ export function Canvas({
   gridSize = 50,
   recentFiles = [],
   isLoading = false,
+  brushSize = 30,
+  maskClearSignal,
   onCropApply,
   onCropCancel,
   onCropRectChange,
@@ -53,20 +58,31 @@ export function Canvas({
   onColorPick,
   onColorPickConfirm,
   onImageRef,
+  onMaskCanvasRef,
 }: CanvasProps) {
   const t = useT()
   const [loadingPath, setLoadingPath] = useState<string | null>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const magnifierRef = useRef<HTMLCanvasElement | null>(null)
   const lastPickedRef = useRef<PickedColor | null>(null)
+  const maskCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const isDrawingRef = useRef(false)
 
   useEffect(() => {
     if (!isLoading) setLoadingPath(null)
   }, [isLoading])
+
   const onImageRefStable = useRef(onImageRef)
   onImageRefStable.current = onImageRef
   const imgCallbackRef = useCallback((el: HTMLImageElement | null) => {
     onImageRefStable.current?.(el)
+  }, [])
+
+  const onMaskCanvasRefStable = useRef(onMaskCanvasRef)
+  onMaskCanvasRefStable.current = onMaskCanvasRef
+  const maskCallbackRef = useCallback((el: HTMLCanvasElement | null) => {
+    maskCanvasRef.current = el
+    onMaskCanvasRefStable.current?.(el)
   }, [])
 
   // Build offscreen canvas from preview data URL for pixel reading
@@ -88,6 +104,20 @@ export function Canvas({
     img.src = image.preview
   }, [image?.preview, image?.width, image?.height])
 
+  // Clear mask when image changes (new image loaded)
+  useEffect(() => {
+    if (!maskCanvasRef.current) return
+    const ctx = maskCanvasRef.current.getContext('2d')
+    if (ctx) ctx.clearRect(0, 0, maskCanvasRef.current.width, maskCanvasRef.current.height)
+  }, [image?.preview])
+
+  // Clear mask on demand (from InpaintingControls "clear" button)
+  useEffect(() => {
+    if (maskClearSignal === undefined || !maskCanvasRef.current || !image) return
+    const ctx = maskCanvasRef.current.getContext('2d')
+    if (ctx) ctx.clearRect(0, 0, image.width, image.height)
+  }, [maskClearSignal, image])
+
   // Hide magnifier when leaving eyedropper mode
   useEffect(() => {
     if (mode !== 'eyedropper' && magnifierRef.current) {
@@ -105,6 +135,8 @@ export function Canvas({
     [image, onZoomChange],
   )
 
+  // ── eyedropper ────────────────────────────────────────────────────────────────
+
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (mode !== 'eyedropper' || !image) return
@@ -117,7 +149,6 @@ export function Canvas({
       const displayWidth = Math.round(image.width * zoom)
       const displayHeight = Math.round(image.height * zoom)
 
-      // Draw magnifier imperatively (no state update = no re-render on every move)
       const magCanvas = magnifierRef.current
       if (magCanvas) {
         const ctx = magCanvas.getContext('2d')
@@ -136,7 +167,6 @@ export function Canvas({
             ctx.fillRect(0, 0, MAG_SIZE, MAG_SIZE)
           }
 
-          // Grid lines
           ctx.strokeStyle = 'rgba(0,0,0,0.25)'
           ctx.lineWidth = 0.5
           for (let i = 1; i < MAG_GRID; i++) {
@@ -150,7 +180,6 @@ export function Canvas({
             ctx.stroke()
           }
 
-          // Center pixel highlight
           const cx = Math.floor(MAG_GRID / 2) * MAG_CELL
           const cy = Math.floor(MAG_GRID / 2) * MAG_CELL
           ctx.strokeStyle = 'rgba(255,255,255,0.9)'
@@ -158,7 +187,6 @@ export function Canvas({
           ctx.strokeRect(cx + 0.5, cy + 0.5, MAG_CELL - 1, MAG_CELL - 1)
         }
 
-        // Position: prefer bottom-right of cursor, flip if near edges
         const gapX = 20
         const gapY = 20
         const rightX = containerX + gapX
@@ -173,7 +201,6 @@ export function Canvas({
         magCanvas.style.display = 'block'
       }
 
-      // Pick color
       if (imgX < 0 || imgY < 0 || imgX >= image.width || imgY >= image.height) {
         onColorPick?.(null)
         return
@@ -211,7 +238,6 @@ export function Canvas({
       const imgY = Math.floor((e.clientY - rect.top) / zoom)
       if (imgX < 0 || imgY < 0 || imgX >= image.width || imgY >= image.height) return
 
-      // Try offscreen canvas for precise pixel read; fall back to last hovered color
       const offscreen = offscreenRef.current
       if (offscreen) {
         const ctx = offscreen.getContext('2d')
@@ -227,6 +253,48 @@ export function Canvas({
     },
     [mode, zoom, image, onColorPickConfirm],
   )
+
+  // ── inpainting mask brush ─────────────────────────────────────────────────────
+
+  const paintOnMask = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (!image || !maskCanvasRef.current) return
+      const canvas = maskCanvasRef.current
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      const rect = canvas.getBoundingClientRect()
+      // Convert screen coords → image pixel coords
+      const imgX = (e.clientX - rect.left) / zoom
+      const imgY = (e.clientY - rect.top) / zoom
+      ctx.fillStyle = 'rgba(255, 60, 60, 0.7)'
+      ctx.beginPath()
+      ctx.arc(imgX, imgY, brushSize / 2, 0, Math.PI * 2)
+      ctx.fill()
+    },
+    [image, zoom, brushSize],
+  )
+
+  const handleMaskMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      isDrawingRef.current = true
+      paintOnMask(e)
+    },
+    [paintOnMask],
+  )
+
+  const handleMaskMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (!isDrawingRef.current) return
+      paintOnMask(e)
+    },
+    [paintOnMask],
+  )
+
+  const handleMaskMouseUp = useCallback(() => {
+    isDrawingRef.current = false
+  }, [])
+
+  // ── empty state ───────────────────────────────────────────────────────────────
 
   if (!image) {
     return (
@@ -307,6 +375,7 @@ export function Canvas({
   const displayWidth = Math.round(image.width * zoom)
   const displayHeight = Math.round(image.height * zoom)
   const isEyedropper = mode === 'eyedropper'
+  const isInpainting = mode === 'inpainting'
 
   return (
     <div
@@ -358,6 +427,28 @@ export function Canvas({
             onApply={onCropApply}
             onCancel={onCropCancel}
             onCropRectChange={onCropRectChange}
+          />
+        )}
+
+        {/* Inpainting mask brush canvas */}
+        {isInpainting && (
+          <canvas
+            ref={maskCallbackRef}
+            width={image.width}
+            height={image.height}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: displayWidth,
+              height: displayHeight,
+              cursor: 'crosshair',
+              touchAction: 'none',
+            }}
+            onMouseDown={handleMaskMouseDown}
+            onMouseMove={handleMaskMouseMove}
+            onMouseUp={handleMaskMouseUp}
+            onMouseLeave={handleMaskMouseUp}
           />
         )}
 

@@ -28,6 +28,7 @@ import {
   filterBlurGaussian,
   filterBlurMotion,
   filterBlurRadial,
+  inpaintImage,
   canvasResizeImage,
   closeAllTabs,
   closeOtherTabs,
@@ -151,6 +152,9 @@ interface ImageEditorActions {
   handleFilterBlurGaussian: (radius: number) => Promise<void>
   handleFilterBlurMotion: (angle: number, distance: number) => Promise<void>
   handleFilterBlurRadial: (strength: number, samples: number) => Promise<void>
+  enterInpaintingMode: () => void
+  exitInpaintingMode: () => void
+  handleInpaint: (maskB64: string, maskWidth: number, maskHeight: number) => Promise<void>
 }
 
 export function useImageEditor(): ImageEditorState & ImageEditorActions {
@@ -602,12 +606,34 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     [applyFilter],
   )
 
+  const handleInpaint = useCallback(
+    async (maskB64: string, maskWidth: number, maskHeight: number) => {
+      if (!activeTabId) return
+      const id = activeTabId
+      await withLoading(async () => {
+        const result = await inpaintImage(id, maskB64, maskWidth, maskHeight)
+        updateTab(id, (tab) => {
+          const [nextHistory, nextIndex] = pushHistory(
+            tab.history,
+            tab.historyIndex,
+            'Remove object',
+          )
+          return { ...tab, image: result, history: nextHistory, historyIndex: nextIndex }
+        })
+        setMode('idle')
+      })
+    },
+    [withLoading, activeTabId, updateTab],
+  )
+
   const enterCropMode = useCallback(() => setMode('cropping'), [])
   const exitCropMode = useCallback(() => setMode('idle'), [])
   const enterRotateMode = useCallback(() => setMode('rotating'), [])
   const exitRotateMode = useCallback(() => setMode('idle'), [])
   const enterEyedropperMode = useCallback(() => setMode('eyedropper'), [])
   const exitEyedropperMode = useCallback(() => setMode('idle'), [])
+  const enterInpaintingMode = useCallback(() => setMode('inpainting'), [])
+  const exitInpaintingMode = useCallback(() => setMode('idle'), [])
   const clearError = useCallback(() => setError(null), [])
 
   return {
@@ -646,6 +672,9 @@ export function useImageEditor(): ImageEditorState & ImageEditorActions {
     exitCropMode,
     enterRotateMode,
     exitRotateMode,
+    enterInpaintingMode,
+    exitInpaintingMode,
+    handleInpaint,
     setZoom,
     clearError,
     handleAdjustBrightnessContrast,

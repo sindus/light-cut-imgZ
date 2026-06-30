@@ -232,6 +232,7 @@ pub fn run() {
             commands::filters::filter_blur_gaussian,
             commands::filters::filter_blur_motion,
             commands::filters::filter_blur_radial,
+            commands::inpaint::inpaint_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
